@@ -71,6 +71,7 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups)
 		
 		# now filter
+		# TO-DO: when using 'AND' filtering, will only match pure types; looking for Grass, 'Grass/Poison' will be discarded because of 'Poison'
 		if filterType == 'AND':
 			removePokemon = False
 			# if anything DOES NOT match, set removePokemon to True
@@ -79,10 +80,10 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 					#print(type,':',pType1)
 					if pType1 != type:
 						removePokemon = True
-				if pType2 is not None:
-					#print(type,':',pType2)
-					if pType2 != type:
-						removePokemon = True
+						if pType2 is not None:
+							#print(type,':',pType2)
+							if pType2 == type:
+								removePokemon = False
 			if level is not None:
 				if pMinimumLevel is not None:
 					#print(level,':',pMinimumLevel)
@@ -151,4 +152,4 @@ loadData()
 #print(pokemonData)
 
 #print(set(getFilteredPokemonList(pokemonData, type="Water")))
-print(getFilteredPokemonList(pokemonData, filterType="AND", habitat="Grassland", type="Electric"))
+print(getFilteredPokemonList(pokemonData, filterType="AND", habitat="Grassland", type="Grass"))
