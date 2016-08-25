@@ -28,12 +28,12 @@ def getRandomPokemon(type=None, level=None):
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # returns a list; the result can be run through set() to remove duplicates
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that match all filter conditions.
-def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None, diet=None, habitat=None, eggGroup=None):
+def getFilteredPokemonList(filterType='OR', list=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
 		#print(filteredList)
-		for pokemon in d:
+		for pokemon in pokemonData:
 			#print(pokemon)
 			if pokemon is not 'DEFAULT':
 				filteredList.append(pokemon)
@@ -47,28 +47,28 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 	for pName in filteredList:
 		#print(pName)
 		# get data for the pokemon
-		pType1 = None
-		pType2 = None
+		pTypes = None
 		pMinimumLevel = None
 		pDiets = None
 		pHabitats = None
 		pEggGroups = None
+		pFamily = None
 		
-		if 'type_1' in d[pName]:
-			pType1 = d[pName]['type_1']
-		if 'type_2' in d[pName]:
-			pType2 = d[pName]['type_2']
-		if 'minimum_level' in d[pName]:
-			pMinimumLevel = d[pName]['minimum_level']
-		if 'diets' in d[pName]:
-			pDiets = d[pName]['diets'].split(',')
-		if 'habitats' in d[pName]:
-			pHabitats = d[pName]['habitats'].split(',')
-		if 'egg_groups' in d[pName]:
-			pEggGroups = d[pName]['egg_groups'].split(',')
+		if 'types' in pokemonData[pName]:
+			pTypes = pokemonData[pName]['types'].split(',')
+		if 'minimum_level' in pokemonData[pName]:
+			pMinimumLevel = pokemonData[pName]['minimum_level']
+		if 'diets' in pokemonData[pName]:
+			pDiets = pokemonData[pName]['diets'].split(',')
+		if 'habitats' in pokemonData[pName]:
+			pHabitats = pokemonData[pName]['habitats'].split(',')
+		if 'egg_groups' in pokemonData[pName]:
+			pEggGroups = pokemonData[pName]['egg_groups'].split(',')
+		if 'family' in pokemonData[pName]:
+			pFamily = pokemonData[pName]['family'].split(',')
 		
 		# it's getting information properly for the pokemon it checks, but for some reason it isn't checking all pokemon on the list, and randomly chooses what to check
-		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups)
+		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
 		
 		# now filter
 		# TO-DO: when using 'AND' filtering, will only match pure types; looking for Grass, 'Grass/Poison' will be discarded because of 'Poison'
@@ -76,14 +76,10 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 			removePokemon = False
 			# if anything DOES NOT match, set removePokemon to True
 			if type is not None:
-				if pType1 is not None:
-					#print(type,':',pType1)
-					if pType1 != type:
+				if pTypes is not None:
+					#print(type,':',pTypes)
+					if type not in pTypes:
 						removePokemon = True
-						if pType2 is not None:
-							#print(type,':',pType2)
-							if pType2 == type:
-								removePokemon = False
 			if level is not None:
 				if pMinimumLevel is not None:
 					#print(level,':',pMinimumLevel)
@@ -104,17 +100,18 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 					#print(eggGroup,':',pEggGroups)
 					if eggGroup not in pEggGroups:
 						removePokemon = True
+			if family is not None:
+				if pFamily is not None:
+					#print(family,':',pFamily)
+					if family not in pFamily:
+						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
 			# if anything DOES match, set removePokemon to False
 			if type is not None:
-				if pType1 is not None:
-					#print(type,':',pType1)
-					if pType1 == type:
-						removePokemon = False
-				if pType2 is not None:
-					#print(type,':',pType2)
-					if pType2 == type:
+				if pTypes is not None:
+					#print(type,':',pTypes)
+					if type in pTypes:
 						removePokemon = False
 			if level is not None:
 				if pMinimumLevel is not None:
@@ -136,6 +133,11 @@ def getFilteredPokemonList(d, filterType='OR', list=None, type=None, level=None,
 					#print(eggGroup,':',pEggGroups)
 					if eggGroup in pEggGroups:
 						removePokemon = False
+			if family is not None:
+				if pFamily is not None:
+					#print(family,':',pFamily)
+					if family in pFamily:
+						removePokemon = False
 		
 		#print(pName,':',removePokemon)
 		# we can't actually remove stuff here, as that would interfere with looping through the list
@@ -152,4 +154,4 @@ loadData()
 #print(pokemonData)
 
 #print(set(getFilteredPokemonList(pokemonData, type="Water")))
-print(getFilteredPokemonList(pokemonData, filterType="AND", habitat="Grassland", type="Grass"))
+print(getFilteredPokemonList(filterType="AND", type="Dark", family="Eevee"))
