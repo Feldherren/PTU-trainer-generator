@@ -246,5 +246,5 @@ loadData()
 
 #print(pokemonData)
 
-#print(set(filterPokemonList(pokemonData, type="Water")))
+#print(getFilteredPokemonList('type=Water')))
 print(getFilteredPokemonList(args.filterstring))
