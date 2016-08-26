@@ -25,10 +25,44 @@ def getRandomPokemon(type=None, level=None):
 	pokemon = None
 	return pokemon
 
+# filterString example: 'type=Grass;type=Poison'
+def getFilteredPokemonList(filterString=None):
+	filteredList = []
+	for pokemon in pokemonData:
+		#print(pokemon)
+		filteredList.append(pokemon)
+	
+	if filterString is not None:
+		for f in filterString.split(';'):
+			filter = f.split('=')
+			print("Filtering for:",filter[0],'=',filter[1])
+			if filter[0].lower() == 'type':
+				filteredList = filterPokemonList(list=filteredList,type=filter[1])
+			elif filter[0].lower() == 'level':
+				filteredList = filterPokemonList(list=filteredList,level=filter[1])
+			elif filter[0].lower() == 'diet':
+				filteredList = filterPokemonList(list=filteredList,diet=filter[1])
+			elif filter[0].lower() == 'habitat':
+				filteredList = filterPokemonList(list=filteredList,habitat=filter[1])
+			elif filter[0].lower() == 'eggGroup':
+				filteredList = filterPokemonList(list=filteredList,eggGroup=filter[1])
+			elif filter[0].lower() == 'family':
+				filteredList = filterPokemonList(list=filteredList,family=filter[1])
+			elif filter[0].lower() == 'ability':
+				filteredList = filterPokemonList(list=filteredList,ability=filter[1])
+			elif filter[0].lower() == 'basicability':
+				filteredList = filterPokemonList(list=filteredList,basicAbility=filter[1])
+			elif filter[0].lower() == 'advancedability':
+				filteredList = filterPokemonList(list=filteredList,advancedAbility=filter[1])
+			elif filter[0].lower() == 'highability':
+				filteredList = filterPokemonList(list=filteredList,highAbility=filter[1])
+	
+	return filteredList
+
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # returns a list; the result can be run through set() to remove duplicates
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that match all filter conditions.
-def getFilteredPokemonList(filterType='OR', list=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None):
+def filterPokemonList(filterType='OR', list=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -75,6 +109,8 @@ def getFilteredPokemonList(filterType='OR', list=None, type=None, level=None, di
 			pAdvancedAbilities = pokemonData[pName]['advanced_abilities'].split(',')
 		if 'high_ability' in pokemonData[pName]:
 			pHighAbility = pokemonData[pName]['high_ability'].split(',')
+		if 'capabilities' in pokemonData[pName]:
+			pCapabilities = pokemonData[pName]['capabilities'].split(',')
 		
 		# it's getting information properly for the pokemon it checks, but for some reason it isn't checking all pokemon on the list, and randomly chooses what to check
 		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
@@ -122,6 +158,18 @@ def getFilteredPokemonList(filterType='OR', list=None, type=None, level=None, di
 								if pHighAbility is not None:
 									if ability not in pHighAbility:
 										removePokemon = True
+			if basicAbility is not None:
+				if pBasicAbilities is not None:
+					if basicAbility not in pBasicAbilities:
+						removePokemon = True
+			if advancedAbility is not None:
+				if pAdvancedAbilities is not None:
+					if advancedAbility not in pAdvancedAbilities:
+						removePokemon = True
+			if highAbility is not None:
+				if pHighAbility is not None:
+					if highAbility not in pHighAbility:
+						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
 			# if anything DOES match, set removePokemon to False
@@ -156,16 +204,27 @@ def getFilteredPokemonList(filterType='OR', list=None, type=None, level=None, di
 					if family in pFamily:
 						removePokemon = False
 			if ability is not None:
-				if pAbility is not None:
-					if pBasicAbilities is not None:
-						if ability in pBasicAbilities:
-							removePokemon = False
-					if pAdvancedAbilities is not None:
-						if ability in pAdvancedAbilities:
-							removePokemon = False
-					if pHighAbility is not None:
-						if ability in pHighAbility:
-							removePokemon = False
+				if pBasicAbilities is not None:
+					if ability in pBasicAbilities:
+						removePokemon = False
+				if pAdvancedAbilities is not None:
+					if ability in pAdvancedAbilities:
+						removePokemon = False
+				if pHighAbility is not None:
+					if ability in pHighAbility:
+						removePokemon = False
+			if basicAbility is not None:
+				if pBasicAbilities is not None:
+					if basicAbility in pBasicAbilities:
+						removePokemon = False
+			if advancedAbility is not None:
+				if pAdvancedAbilities is not None:
+					if advancedAbility in pAdvancedAbilities:
+						removePokemon = False
+			if highAbility is not None:
+				if pHighAbility is not None:
+					if highAbility in pHighAbility:
+						removePokemon = False
 		
 		#print(pName,':',removePokemon)
 		# we can't actually remove stuff here, as that would interfere with looping through the list
@@ -181,5 +240,5 @@ loadData()
 
 #print(pokemonData)
 
-#print(set(getFilteredPokemonList(pokemonData, type="Water")))
-print(getFilteredPokemonList(filterType="AND", ability="Run Away"))
+#print(set(filterPokemonList(pokemonData, type="Water")))
+print(getFilteredPokemonList('basicAbility=Run Away'))
