@@ -2,6 +2,12 @@
 # actually, necessary to say we want something of a particular family
 
 import configparser #https://docs.python.org/3/library/configparser.html
+import argparse #https://docs.python.org/3/library/argparse.html
+
+parser = argparse.ArgumentParser(description='Currently just filters for pokemon based on a supplied filter string')
+parser.add_argument('filterstring', help='string to filter pokemon by')
+
+args = parser.parse_args()
 
 pokemonData = dict()
 
@@ -39,7 +45,7 @@ def getFilteredPokemonList(filterString=None):
 			if filter[0].lower() == 'type':
 				filteredList = filterPokemonList(list=filteredList,type=filter[1])
 			elif filter[0].lower() == 'level':
-				filteredList = filterPokemonList(list=filteredList,level=filter[1])
+				filteredList = filterPokemonList(list=filteredList,level=int(filter[1]))
 			elif filter[0].lower() == 'diet':
 				filteredList = filterPokemonList(list=filteredList,diet=filter[1])
 			elif filter[0].lower() == 'habitat':
@@ -94,7 +100,7 @@ def filterPokemonList(filterType='OR', list=None, type=None, level=None, diet=No
 		if 'types' in pokemonData[pName]:
 			pTypes = pokemonData[pName]['types'].split(',')
 		if 'minimum_level' in pokemonData[pName]:
-			pMinimumLevel = pokemonData[pName]['minimum_level']
+			pMinimumLevel = int(pokemonData[pName]['minimum_level'])
 		if 'diets' in pokemonData[pName]:
 			pDiets = pokemonData[pName]['diets'].split(',')
 		if 'habitats' in pokemonData[pName]:
@@ -241,4 +247,4 @@ loadData()
 #print(pokemonData)
 
 #print(set(filterPokemonList(pokemonData, type="Water")))
-print(getFilteredPokemonList('basicAbility=Run Away'))
+print(getFilteredPokemonList(args.filterstring))
