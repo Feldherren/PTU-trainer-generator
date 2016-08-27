@@ -50,7 +50,7 @@ def printPokemonData(pName):
 def getPokemonTypes(pName):
 	types = None
 	if 'types' in pokemonData[pName]:
-		types = [x.lower() for x in pokemonData[pName]['types'].split(',')]
+		types = [x.lower().strip() for x in pokemonData[pName]['types'].split(',')]
 	return types
 
 def getPokemonMinimumLevel(pName):
@@ -62,37 +62,37 @@ def getPokemonMinimumLevel(pName):
 def getPokemonDiets(pName):
 	diets = None
 	if 'diets' in pokemonData[pName]:
-		diets = [x.lower() for x in pokemonData[pName]['diets'].split(',')]
+		diets = [x.lower().strip() for x in pokemonData[pName]['diets'].split(',')]
 	return diets
 
 def getPokemonHabitats(pName):
 	habitats = None
 	if 'habitats' in pokemonData[pName]:
-		habitats = [x.lower() for x in pokemonData[pName]['habitats'].split(',')]
+		habitats = [x.lower().strip() for x in pokemonData[pName]['habitats'].split(',')]
 	return habitats
 
 def getPokemonEggGroups(pName):
 	eggGroups = None
 	if 'egg_groups' in pokemonData[pName]:
-		eggGroups = [x.lower() for x in pokemonData[pName]['egg_groups'].split(',')]
+		eggGroups = [x.lower().strip() for x in pokemonData[pName]['egg_groups'].split(',')]
 	return eggGroups
 
 def getPokemonFamily(pName):
 	family = None
 	if 'family' in pokemonData[pName]:
-		family = [x.lower() for x in pokemonData[pName]['family'].split(',')]
+		family = [x.lower().strip() for x in pokemonData[pName]['family'].split(',')]
 	return family
 
 def getPokemonBasicAbilities(pName):
 	basicAbilities = None
 	if 'basic_abilities' in pokemonData[pName]:
-		basicAbilities = [x.lower() for x in pokemonData[pName]['basic_abilities'].split(',')]
+		basicAbilities = [x.lower().strip() for x in pokemonData[pName]['basic_abilities'].split(',')]
 	return basicAbilities
 
 def getPokemonAdvancedAbilities(pName):
 	advancedAbilities = None
 	if 'advanced_abilities' in pokemonData[pName]:
-		advancedAbilities = [x.lower() for x in pokemonData[pName]['advanced_abilities'].split(',')]
+		advancedAbilities = [x.lower().strip() for x in pokemonData[pName]['advanced_abilities'].split(',')]
 	return advancedAbilities
 
 def getPokemonHighAbility(pName):
@@ -104,31 +104,31 @@ def getPokemonHighAbility(pName):
 def getPokemonCapabilities(pName):
 	capabilities = None
 	if 'capabilities' in pokemonData[pName]:
-		capabilities = [x.lower() for x in pokemonData[pName]['capabilities'].split(',')]
+		capabilities = [x.lower().strip() for x in pokemonData[pName]['capabilities'].split(',')]
 	return capabilities
 
 def getPokemonHMMoves(pName):
 	hmMoves = None
 	if 'hm_moves' in pokemonData[pName]:
-		hmMoves = [x.lower() for x in pokemonData[pName]['hm_moves'].split(',')]
+		hmMoves = [x.lower().strip() for x in pokemonData[pName]['hm_moves'].split(',')]
 	return hmMoves
 
 def getPokemonTMMoves(pName):
 	tmMoves = None
 	if 'tm_moves' in pokemonData[pName]:
-		tmMoves = [x.lower() for x in pokemonData[pName]['tm_moves'].split(',')]
+		tmMoves = [x.lower().strip() for x in pokemonData[pName]['tm_moves'].split(',')]
 	return tmMoves
 
 def getPokemonEggMoves(pName):
 	eggMoves = None
 	if 'egg_moves' in pokemonData[pName]:
-		eggMoves = [x.lower() for x in pokemonData[pName]['egg_moves'].split(',')]
+		eggMoves = [x.lower().strip() for x in pokemonData[pName]['egg_moves'].split(',')]
 	return eggMoves
 
 def getPokemonTutorMoves(pName):
 	tutorMoves = None
 	if 'tutor_moves' in pokemonData[pName]:
-		tutorMoves = [x.lower() for x in pokemonData[pName]['tutor_moves'].split(',')]
+		tutorMoves = [x.lower().strip() for x in pokemonData[pName]['tutor_moves'].split(',')]
 	return tutorMoves
 
 # filterString example: 'type=Grass;type=Poison'
