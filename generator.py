@@ -285,6 +285,7 @@ while True:
 	elif mainMenu == "1":
 		print("1. Search")
 		print("2. Pokemon Information")
+		print("R. Reload Data")
 		print("0. Back")
 		pokedexMenu = input("> ")
 		if pokedexMenu == "0": # Back
@@ -297,3 +298,5 @@ while True:
 		elif pokedexMenu == "2": # Pokemon Information
 			pName = input("Pokemon name> ")
 			printPokemonData(pName)
+		elif pokedexMenu == "R": # Reload Data
+			loadData()
