@@ -1,5 +1,6 @@
 # possibly not necessary to track what evolutions a pokemon has
 # actually, necessary to say we want something of a particular family
+# To-DO: compatibility check, re: egg groups?
 
 import configparser #https://docs.python.org/3/library/configparser.html
 import argparse #https://docs.python.org/3/library/argparse.html
@@ -66,7 +67,7 @@ def getFilteredPokemonList(filterString=None):
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,diet=filter[1])
 			elif filter[0].lower() == 'habitat':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,habitat=filter[1])
-			elif filter[0].lower() == 'eggGroup':
+			elif filter[0].lower() == 'egggroup':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,eggGroup=filter[1])
 			elif filter[0].lower() == 'family':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,family=filter[1])
@@ -78,17 +79,22 @@ def getFilteredPokemonList(filterString=None):
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
 			elif filter[0].lower() == 'highability':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
-			elif filter[0].lower() == 'hm': # or hmmove?
+			elif filter[0].lower() == 'hm' or filter[0].lower() == 'hmmove':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,hmMove=filter[1])
-			elif filter[0].lower() == 'tm': # or hmmove?
+			elif filter[0].lower() == 'tm' or filter[0].lower() == 'tmmove':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,tmMove=filter[1])
+			elif filter[0].lower() == 'tutor' or filter[0].lower() == 'tutormove':
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,tutorMove=filter[1])
+			elif filter[0].lower() == 'egg' or filter[0].lower() == 'eggmove':
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,eggMove=filter[1])
 	
 	return filteredList
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
 # TO-DO: make this less case-sensitive
-def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None, tmMove=None):
+# TO-DO: other searches; available moves by any means (any, level, tutor, egg)
+def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -118,6 +124,8 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 		pHighAbility = None
 		pHMMoves = None
 		pTMMoves = None
+		pEggMoves = None
+		pTutorMoves = None
 		
 		if 'types' in pokemonData[pName]:
 			pTypes = pokemonData[pName]['types'].split(',')
@@ -143,6 +151,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			pHMMoves = pokemonData[pName]['hm_moves'].split(',')
 		if 'tm_moves' in pokemonData[pName]:
 			pTMMoves = pokemonData[pName]['tm_moves'].split(',')
+		if 'egg_moves' in pokemonData[pName]:
+			pEggMoves = pokemonData[pName]['egg_moves'].split(',')
+		if 'tutor_moves' in pokemonData[pName]:
+			pTutorMoves = pokemonData[pName]['tutor_moves'].split(',')
 		
 		# it's getting information properly for the pokemon it checks, but for some reason it isn't checking all pokemon on the list, and randomly chooses what to check
 		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
@@ -215,6 +227,14 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 				if pTMMoves is not None:
 					if tmMove in pTMMoves:
 						removePokemon = True
+			if eggMove is not None:
+				if pEggMoves is not None:
+					if eggMove in pEggMoves:
+						removePokemon = True
+			if tutorMove is not None:
+				if pTutorMoves is not None:
+					if tutorMove in pTutorMoves:
+						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
 			# if anything DOES match, set removePokemon to False
@@ -281,6 +301,14 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if tmMove is not None:
 				if pTMMoves is not None:
 					if tmMove in pTMMoves:
+						removePokemon = False
+			if eggMove is not None:
+				if pEggMoves is not None:
+					if eggMove in pEggMoves:
+						removePokemon = False
+			if tutorMove is not None:
+				if pTutorMoves is not None:
+					if tutorMove in pTutorMoves:
 						removePokemon = False
 		
 		#print(pName,':',removePokemon)
