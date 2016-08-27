@@ -32,12 +32,106 @@ def getRandomPokemon(type=None, level=None):
 	pokemon = None
 	return pokemon
 
+def checkCompatibility(a, b):
+	matches = list()
+	if 'Indeterminate' not in getPokemonEggGroups(a) and 'Indeterminate' not in getPokemonEggGroups(b):
+		if 'Ditto' in getPokemonEggGroups(a) or 'Ditto' in getPokemonEggGroups(b):
+			return 'Ditto'
+		else:
+			for eggGroup in getPokemonEggGroups(a):
+				if eggGroup in getPokemonEggGroups(b):
+					matches.append(eggGroup)
+					return matches
+
 def printPokemonData(pName):
 	#pokemonData[pName]
 	print(pName,'(p'+pokemonData[pName]['page']+')')
 
+def getPokemonTypes(pName):
+	types = None
+	if 'types' in pokemonData[pName]:
+		types = [x.lower() for x in pokemonData[pName]['types'].split(',')]
+	return types
+
+def getPokemonMinimumLevel(pName):
+	minLevel = None
+	if 'minimum_level' in pokemonData[pName]:
+		minLevel = int(pokemonData[pName]['minimum_level'])
+	return minLevel
+
+def getPokemonDiets(pName):
+	diets = None
+	if 'diets' in pokemonData[pName]:
+		diets = [x.lower() for x in pokemonData[pName]['diets'].split(',')]
+	return diets
+
+def getPokemonHabitats(pName):
+	habitats = None
+	if 'habitats' in pokemonData[pName]:
+		habitats = [x.lower() for x in pokemonData[pName]['habitats'].split(',')]
+	return habitats
+
+def getPokemonEggGroups(pName):
+	eggGroups = None
+	if 'egg_groups' in pokemonData[pName]:
+		eggGroups = [x.lower() for x in pokemonData[pName]['egg_groups'].split(',')]
+	return eggGroups
+
+def getPokemonFamily(pName):
+	family = None
+	if 'family' in pokemonData[pName]:
+		family = [x.lower() for x in pokemonData[pName]['family'].split(',')]
+	return family
+
+def getPokemonBasicAbilities(pName):
+	basicAbilities = None
+	if 'basic_abilities' in pokemonData[pName]:
+		basicAbilities = [x.lower() for x in pokemonData[pName]['basic_abilities'].split(',')]
+	return basicAbilities
+
+def getPokemonAdvancedAbilities(pName):
+	advancedAbilities = None
+	if 'advanced_abilities' in pokemonData[pName]:
+		advancedAbilities = [x.lower() for x in pokemonData[pName]['advanced_abilities'].split(',')]
+	return advancedAbilities
+
+def getPokemonHighAbility(pName):
+	highAbility = None
+	if 'high_ability' in pokemonData[pName]:
+		highAbility = pokemonData[pName]['high_ability'].lower()
+	return highAbility
+
+def getPokemonCapabilities(pName):
+	capabilities = None
+	if 'capabilities' in pokemonData[pName]:
+		capabilities = [x.lower() for x in pokemonData[pName]['capabilities'].split(',')]
+	return capabilities
+
+def getPokemonHMMoves(pName):
+	hmMoves = None
+	if 'hm_moves' in pokemonData[pName]:
+		hmMoves = [x.lower() for x in pokemonData[pName]['hm_moves'].split(',')]
+	return hmMoves
+
+def getPokemonTMMoves(pName):
+	tmMoves = None
+	if 'tm_moves' in pokemonData[pName]:
+		tmMoves = [x.lower() for x in pokemonData[pName]['tm_moves'].split(',')]
+	return tmMoves
+
+def getPokemonEggMoves(pName):
+	eggMoves = None
+	if 'egg_moves' in pokemonData[pName]:
+		eggMoves = [x.lower() for x in pokemonData[pName]['egg_moves'].split(',')]
+	return eggMoves
+
+def getPokemonTutorMoves(pName):
+	tutorMoves = None
+	if 'tutor_moves' in pokemonData[pName]:
+		tutorMoves = [x.lower() for x in pokemonData[pName]['tutor_moves'].split(',')]
+	return tutorMoves
+
 # filterString example: 'type=Grass;type=Poison'
-# could do with a 'not' option: 'type=!grass'
 def getFilteredPokemonList(filterString=None):
 	filteredList = []
 	for pokemon in pokemonData:
@@ -92,8 +186,7 @@ def getFilteredPokemonList(filterString=None):
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
-# TO-DO: make this less case-sensitive
-# TO-DO: other searches; available moves by any means (any, level, tutor, egg)
+# TO-DO: fix egg-move search; isn't returning results for certain moves, like 'Curse'
 def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
 	if list == None:
 		filteredList = []
@@ -111,53 +204,21 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 	# now start filtering things from the list
 	remDict = dict()
 	for pName in filteredList:
-		#print(pName)
 		# get data for the pokemon
-		pTypes = None
-		pMinimumLevel = None
-		pDiets = None
-		pHabitats = None
-		pEggGroups = None
-		pFamily = None
-		pBasicAbilities = None
-		pAdvancedAbilities = None
-		pHighAbility = None
-		pHMMoves = None
-		pTMMoves = None
-		pEggMoves = None
-		pTutorMoves = None
-		
-		if 'types' in pokemonData[pName]:
-			pTypes = pokemonData[pName]['types'].split(',')
-		if 'minimum_level' in pokemonData[pName]:
-			pMinimumLevel = int(pokemonData[pName]['minimum_level'])
-		if 'diets' in pokemonData[pName]:
-			pDiets = pokemonData[pName]['diets'].split(',')
-		if 'habitats' in pokemonData[pName]:
-			pHabitats = pokemonData[pName]['habitats'].split(',')
-		if 'egg_groups' in pokemonData[pName]:
-			pEggGroups = pokemonData[pName]['egg_groups'].split(',')
-		if 'family' in pokemonData[pName]:
-			pFamily = pokemonData[pName]['family'].split(',')
-		if 'basic_abilities' in pokemonData[pName]:
-			pBasicAbilities = pokemonData[pName]['basic_abilities'].split(',')
-		if 'advanced_abilities' in pokemonData[pName]:
-			pAdvancedAbilities = pokemonData[pName]['advanced_abilities'].split(',')
-		if 'high_ability' in pokemonData[pName]:
-			pHighAbility = pokemonData[pName]['high_ability'].split(',')
-		if 'capabilities' in pokemonData[pName]:
-			pCapabilities = pokemonData[pName]['capabilities'].split(',')
-		if 'hm_moves' in pokemonData[pName]:
-			pHMMoves = pokemonData[pName]['hm_moves'].split(',')
-		if 'tm_moves' in pokemonData[pName]:
-			pTMMoves = pokemonData[pName]['tm_moves'].split(',')
-		if 'egg_moves' in pokemonData[pName]:
-			pEggMoves = pokemonData[pName]['egg_moves'].split(',')
-		if 'tutor_moves' in pokemonData[pName]:
-			pTutorMoves = pokemonData[pName]['tutor_moves'].split(',')
-		
-		# it's getting information properly for the pokemon it checks, but for some reason it isn't checking all pokemon on the list, and randomly chooses what to check
-		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
+		pTypes = getPokemonTypes(pName)
+		pMinimumLevel = getPokemonMinimumLevel(pName)
+		pDiets = getPokemonDiets(pName)
+		pHabitats = getPokemonHabitats(pName)
+		pEggGroups = getPokemonEggGroups(pName)
+		pFamily = getPokemonFamily(pName)
+		pBasicAbilities = getPokemonBasicAbilities(pName)
+		pAdvancedAbilities = getPokemonAdvancedAbilities(pName)
+		pHighAbility = getPokemonHighAbility(pName)
+		pCapabilities = getPokemonCapabilities(pName)
+		pHMMoves = getPokemonHMMoves(pName)
+		pTMMoves = getPokemonTMMoves(pName)
+		pEggMoves = getPokemonEggMoves(pName)
+		pTutorMoves = getPokemonTutorMoves(pName)
 		
 		# now filter
 		if filterType == 'NOT':
@@ -170,7 +231,7 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if type is not None:
 				if pTypes is not None:
 					#print(type,':',pTypes)
-					if type in pTypes:
+					if type.lower() in pTypes:
 						removePokemon = True
 			if level is not None:
 				if pMinimumLevel is not None:
@@ -180,60 +241,60 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if diet is not None:
 				if pDiets is not None:
 					#print(diet,':',pDiets)
-					if diet in pDiets:
+					if diet.lower() in pDiets:
 						removePokemon = True
 			if habitat is not None:
 				if pHabitats is not None:
 					#print(habitat,':',pHabitats)
-					if habitat in pHabitats:
+					if habitat.lower() in pHabitats:
 						removePokemon = True
 			if eggGroup is not None:
 				if pEggGroups is not None:
 					#print(eggGroup,':',pEggGroups)
-					if eggGroup in pEggGroups:
+					if eggGroup.lower() in pEggGroups:
 						removePokemon = True
 			if family is not None:
 				if pFamily is not None:
 					#print(family,':',pFamily)
-					if family in pFamily:
+					if family.lower() in pFamily:
 						removePokemon = True
 			if ability is not None:
 				if pBasicAbilities is not None:
-					if ability in pBasicAbilities:
+					if ability.lower() in pBasicAbilities:
 						removePokemon = True
 				if pAdvancedAbilities is not None:
-					if ability in pAdvancedAbilities:
+					if ability.lower() in pAdvancedAbilities:
 						removePokemon = True
 				if pHighAbility is not None:
-					if ability in pHighAbility:
+					if ability.lower() in pHighAbility:
 						removePokemon = True
 			if basicAbility is not None:
 				if pBasicAbilities is not None:
-					if basicAbility in pBasicAbilities:
+					if basicAbility.lower() in pBasicAbilities:
 						removePokemon = True
 			if advancedAbility is not None:
 				if pAdvancedAbilities is not None:
-					if advancedAbility in pAdvancedAbilities:
+					if advancedAbility.lower() in pAdvancedAbilities:
 						removePokemon = True
 			if highAbility is not None:
 				if pHighAbility is not None:
-					if highAbility in pHighAbility:
+					if highAbility.lower() in pHighAbility:
 						removePokemon = True
 			if hmMove is not None:
 				if pHMMoves is not None:
-					if hmMove in pHMMoves:
+					if hmMove.lower() in pHMMoves:
 						removePokemon = True
 			if tmMove is not None:
 				if pTMMoves is not None:
-					if tmMove in pTMMoves:
+					if tmMove.lower() in pTMMoves:
 						removePokemon = True
 			if eggMove is not None:
 				if pEggMoves is not None:
-					if eggMove in pEggMoves:
+					if eggMove.lower() in pEggMoves:
 						removePokemon = True
 			if tutorMove is not None:
 				if pTutorMoves is not None:
-					if tutorMove in pTutorMoves:
+					if tutorMove.lower() in pTutorMoves:
 						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
@@ -245,7 +306,7 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if type is not None:
 				if pTypes is not None:
 					#print(type,':',pTypes)
-					if type in pTypes:
+					if type.lower() in pTypes:
 						removePokemon = False
 			if level is not None:
 				if pMinimumLevel is not None:
@@ -255,60 +316,60 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if diet is not None:
 				if pDiets is not None:
 					#print(diet,':',pDiets)
-					if diet in pDiets:
+					if diet.lower() in pDiets:
 						removePokemon = False
 			if habitat is not None:
 				if pHabitats is not None:
 					#print(habitat,':',pHabitats)
-					if habitat in pHabitats:
+					if habitat.lower() in pHabitats:
 						removePokemon = False
 			if eggGroup is not None:
 				if pEggGroups is not None:
 					#print(eggGroup,':',pEggGroups)
-					if eggGroup in pEggGroups:
+					if eggGroup.lower() in pEggGroups:
 						removePokemon = False
 			if family is not None:
 				if pFamily is not None:
 					#print(family,':',pFamily)
-					if family in pFamily:
+					if family.lower() in pFamily:
 						removePokemon = False
 			if ability is not None:
 				if pBasicAbilities is not None:
-					if ability in pBasicAbilities:
+					if ability.lower() in pBasicAbilities:
 						removePokemon = False
 				if pAdvancedAbilities is not None:
-					if ability in pAdvancedAbilities:
+					if ability.lower() in pAdvancedAbilities:
 						removePokemon = False
 				if pHighAbility is not None:
-					if ability in pHighAbility:
+					if ability.lower() in pHighAbility:
 						removePokemon = False
 			if basicAbility is not None:
 				if pBasicAbilities is not None:
-					if basicAbility in pBasicAbilities:
+					if basicAbility.lower() in pBasicAbilities:
 						removePokemon = False
 			if advancedAbility is not None:
 				if pAdvancedAbilities is not None:
-					if advancedAbility in pAdvancedAbilities:
+					if advancedAbility.lower() in pAdvancedAbilities:
 						removePokemon = False
 			if highAbility is not None:
 				if pHighAbility is not None:
-					if highAbility in pHighAbility:
+					if highAbility.lower() in pHighAbility:
 						removePokemon = False
 			if hmMove is not None:
 				if pHMMoves is not None:
-					if hmMove in pHMMoves:
+					if hmMove.lower() in pHMMoves:
 						removePokemon = False
 			if tmMove is not None:
 				if pTMMoves is not None:
-					if tmMove in pTMMoves:
+					if tmMove.lower() in pTMMoves:
 						removePokemon = False
 			if eggMove is not None:
 				if pEggMoves is not None:
-					if eggMove in pEggMoves:
+					if eggMove.lower() in pEggMoves:
 						removePokemon = False
 			if tutorMove is not None:
 				if pTutorMoves is not None:
-					if tutorMove in pTutorMoves:
+					if tutorMove.lower() in pTutorMoves:
 						removePokemon = False
 		
 		#print(pName,':',removePokemon)
@@ -340,6 +401,7 @@ while True:
 	elif mainMenu == "1":
 		print("1. Search")
 		print("2. Pokemon Information")
+		print("3. Check Compatibility")
 		print("R. Reload Data")
 		print("0. Back")
 		pokedexMenu = input("> ")
@@ -353,5 +415,14 @@ while True:
 		elif pokedexMenu == "2": # Pokemon Information
 			pName = input("Pokemon name> ")
 			printPokemonData(pName)
+		elif pokedexMenu == "3": # Check Compatibility
+			compatibility = None
+			pokemonA = input("Pokemon A> ")
+			pokemonB = input("Pokemon B> ")
+			compatibility = checkCompatibility(pokemonA, pokemonB)
+			if compatibility is not None:
+				print(pokemonA,'+',pokemonB + ': Compatible (' + str(compatibility) + ')')
+			else:
+				print(pokemonA,'+',pokemonB + ': Incompatible')
 		elif pokedexMenu == "R": # Reload Data
 			loadData()
