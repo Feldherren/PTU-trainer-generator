@@ -48,6 +48,7 @@ def getFilteredPokemonList(filterString=None):
 	# error seems to be due to the split() function not being able to split invalid strings
 	# also, do we want diet=!Omnivore, or diet!=Omnivore ?
 	if filterString is not None:
+		#print(filterString)
 		for f in filterString.split(';'):
 			filter = f.split('=')
 			print("Filtering for:",filter[0],'=',filter[1])
