@@ -5,7 +5,7 @@ import configparser #https://docs.python.org/3/library/configparser.html
 import argparse #https://docs.python.org/3/library/argparse.html
 
 parser = argparse.ArgumentParser(description='Currently just filters for pokemon based on a supplied filter string')
-parser.add_argument('filterstring', help='string to filter pokemon by')
+#parser.add_argument('filterstring', help='string to filter pokemon by')
 
 args = parser.parse_args()
 
@@ -31,44 +31,59 @@ def getRandomPokemon(type=None, level=None):
 	pokemon = None
 	return pokemon
 
+def printPokemonData(pName):
+	#pokemonData[pName]
+	print(pName,'(p'+pokemonData[pName]['page']+')')
+
 # filterString example: 'type=Grass;type=Poison'
+# could do with a 'not' option: 'type=!grass'
 def getFilteredPokemonList(filterString=None):
 	filteredList = []
 	for pokemon in pokemonData:
 		#print(pokemon)
 		filteredList.append(pokemon)
 	
+	# does not fail gracefully if you enter something like '0' or that doesn't match the usual pattern
+	# TO-DO: fix error when the user enters something that isn't a valid filter string
+	# error seems to be due to the split() function not being able to split invalid strings
+	# also, do we want diet=!Omnivore, or diet!=Omnivore ?
 	if filterString is not None:
 		for f in filterString.split(';'):
 			filter = f.split('=')
 			print("Filtering for:",filter[0],'=',filter[1])
+			fType='OR'
+			if filter[1][:1] == '!':
+				fType='NOT'
+				filter[1] = filter[1][1:]
+			if filter[0].lower() == 'name':
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,name=filter[1])
 			if filter[0].lower() == 'type':
-				filteredList = filterPokemonList(list=filteredList,type=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,type=filter[1])
 			elif filter[0].lower() == 'level':
-				filteredList = filterPokemonList(list=filteredList,level=int(filter[1]))
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,level=int(filter[1]))
 			elif filter[0].lower() == 'diet':
-				filteredList = filterPokemonList(list=filteredList,diet=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,diet=filter[1])
 			elif filter[0].lower() == 'habitat':
-				filteredList = filterPokemonList(list=filteredList,habitat=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,habitat=filter[1])
 			elif filter[0].lower() == 'eggGroup':
-				filteredList = filterPokemonList(list=filteredList,eggGroup=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,eggGroup=filter[1])
 			elif filter[0].lower() == 'family':
-				filteredList = filterPokemonList(list=filteredList,family=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,family=filter[1])
 			elif filter[0].lower() == 'ability':
-				filteredList = filterPokemonList(list=filteredList,ability=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,ability=filter[1])
 			elif filter[0].lower() == 'basicability':
-				filteredList = filterPokemonList(list=filteredList,basicAbility=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1])
 			elif filter[0].lower() == 'advancedability':
-				filteredList = filterPokemonList(list=filteredList,advancedAbility=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
 			elif filter[0].lower() == 'highability':
-				filteredList = filterPokemonList(list=filteredList,highAbility=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
 	
 	return filteredList
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
-# returns a list; the result can be run through set() to remove duplicates
-# by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that match all filter conditions.
-def filterPokemonList(filterType='OR', list=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None):
+# by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
+# TO-DO: make this less case-sensitive
+def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -122,63 +137,72 @@ def filterPokemonList(filterType='OR', list=None, type=None, level=None, diet=No
 		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
 		
 		# now filter
-		# TO-DO: when using 'AND' filtering, will only match pure types; looking for Grass, 'Grass/Poison' will be discarded because of 'Poison'
-		if filterType == 'AND':
+		if filterType == 'NOT':
 			removePokemon = False
-			# if anything DOES NOT match, set removePokemon to True
+			# if anything DOES match, set removePokemon to True
+			if name is not None:
+				if name.lower() in pName.lower():
+				#if name in pName:
+					removePokemon = True
 			if type is not None:
 				if pTypes is not None:
 					#print(type,':',pTypes)
-					if type not in pTypes:
+					if type in pTypes:
 						removePokemon = True
 			if level is not None:
 				if pMinimumLevel is not None:
 					#print(level,':',pMinimumLevel)
-					if pMinimumLevel > level:
+					if pMinimumLevel <= level:
 						removePokemon = True
 			if diet is not None:
 				if pDiets is not None:
 					#print(diet,':',pDiets)
-					if diet not in pDiets:
+					if diet in pDiets:
 						removePokemon = True
 			if habitat is not None:
 				if pHabitats is not None:
 					#print(habitat,':',pHabitats)
-					if habitat not in pHabitats:
+					if habitat in pHabitats:
 						removePokemon = True
 			if eggGroup is not None:
 				if pEggGroups is not None:
 					#print(eggGroup,':',pEggGroups)
-					if eggGroup not in pEggGroups:
+					if eggGroup in pEggGroups:
 						removePokemon = True
 			if family is not None:
 				if pFamily is not None:
 					#print(family,':',pFamily)
-					if family not in pFamily:
+					if family in pFamily:
 						removePokemon = True
 			if ability is not None:
 				if pBasicAbilities is not None:
-					if ability not in pBasicAbilities:
-						if pAdvancedAbilities is not None:
-							if ability not in pAdvancedAbilities:
-								if pHighAbility is not None:
-									if ability not in pHighAbility:
-										removePokemon = True
+					if ability in pBasicAbilities:
+						removePokemon = True
+				if pAdvancedAbilities is not None:
+					if ability in pAdvancedAbilities:
+						removePokemon = True
+				if pHighAbility is not None:
+					if ability in pHighAbility:
+						removePokemon = True
 			if basicAbility is not None:
 				if pBasicAbilities is not None:
-					if basicAbility not in pBasicAbilities:
+					if basicAbility in pBasicAbilities:
 						removePokemon = True
 			if advancedAbility is not None:
 				if pAdvancedAbilities is not None:
-					if advancedAbility not in pAdvancedAbilities:
+					if advancedAbility in pAdvancedAbilities:
 						removePokemon = True
 			if highAbility is not None:
 				if pHighAbility is not None:
-					if highAbility not in pHighAbility:
+					if highAbility in pHighAbility:
 						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
 			# if anything DOES match, set removePokemon to False
+			if name is not None:
+				if name.lower() in pName.lower():
+				#if name in pName:
+					removePokemon = False
 			if type is not None:
 				if pTypes is not None:
 					#print(type,':',pTypes)
@@ -247,4 +271,29 @@ loadData()
 #print(pokemonData)
 
 #print(getFilteredPokemonList('type=Water')))
-print(getFilteredPokemonList(args.filterstring))
+#print(getFilteredPokemonList(args.filterstring))
+
+mainMenu = "-1"
+
+while True:
+	if mainMenu == "-1":
+		print("1. Pokedex")
+		print("0. Quit")
+		mainMenu = input("> ")
+	elif mainMenu == "0":
+		quit()
+	elif mainMenu == "1":
+		print("1. Search")
+		print("2. Pokemon Information")
+		print("0. Back")
+		pokedexMenu = input("> ")
+		if pokedexMenu == "0": # Back
+			mainMenu = "-1"
+		elif pokedexMenu == "1": # Search
+			print("Enter filter string. Format: key=value to search for pokemon with a particular value,key=!value to search for pokemon without that value, semi-colon to separate filter criteria.")
+			searchString = input("> ")
+			for p in getFilteredPokemonList(searchString):
+				print(p)
+		elif pokedexMenu == "2": # Pokemon Information
+			pName = input("Pokemon name> ")
+			printPokemonData(pName)
