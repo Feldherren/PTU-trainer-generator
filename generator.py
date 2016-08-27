@@ -78,13 +78,15 @@ def getFilteredPokemonList(filterString=None):
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
 			elif filter[0].lower() == 'highability':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
+			elif filter[0].lower() == 'hm': # or hmmove?
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,hmMove=filter[1])
 	
 	return filteredList
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
 # TO-DO: make this less case-sensitive
-def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None):
+def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -112,6 +114,7 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 		pBasicAbilities = None
 		pAdvancedAbilities = None
 		pHighAbility = None
+		pHMMoves = None
 		
 		if 'types' in pokemonData[pName]:
 			pTypes = pokemonData[pName]['types'].split(',')
@@ -133,6 +136,8 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			pHighAbility = pokemonData[pName]['high_ability'].split(',')
 		if 'capabilities' in pokemonData[pName]:
 			pCapabilities = pokemonData[pName]['capabilities'].split(',')
+		if 'hm_moves' in pokemonData[pName]:
+			pHMMoves = pokemonData[pName]['hm_moves'].split(',')
 		
 		# it's getting information properly for the pokemon it checks, but for some reason it isn't checking all pokemon on the list, and randomly chooses what to check
 		#print(pName, pType1, pType2, pMinimumLevel, pDiets, pHabitats, pEggGroups, pFamily)
@@ -197,6 +202,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 				if pHighAbility is not None:
 					if highAbility in pHighAbility:
 						removePokemon = True
+			if hmMove is not None:
+				if pHMMoves is not None:
+					if hmMove in pHMMoves:
+						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
 			# if anything DOES match, set removePokemon to False
@@ -255,6 +264,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if highAbility is not None:
 				if pHighAbility is not None:
 					if highAbility in pHighAbility:
+						removePokemon = False
+			if hmMove is not None:
+				if pHMMoves is not None:
+					if hmMove in pHMMoves:
 						removePokemon = False
 		
 		#print(pName,':',removePokemon)
