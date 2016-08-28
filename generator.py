@@ -194,7 +194,8 @@ def getFilteredPokemonList(filterString=None):
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
 			elif filter[0].lower() == 'highability':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
-			#elif filter[0].lower() == 'move':
+			elif filter[0].lower() == 'move':
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1],hmMove=filter[1],tmMove=filter[1],tutorMove=filter[1],eggMove=filter[1])
 			elif filter[0].lower() == 'levelmove':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1])
 			elif filter[0].lower() == 'hm' or filter[0].lower() == 'hmmove':
