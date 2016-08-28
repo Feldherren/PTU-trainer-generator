@@ -187,7 +187,7 @@ def getFilteredPokemonList(filterString=None):
 			elif filter[0].lower() == 'family':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,family=filter[1])
 			elif filter[0].lower() == 'ability':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,ability=filter[1])
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1],advancedAbility=filter[1],highAbility=filter[1])
 			elif filter[0].lower() == 'basicability':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1])
 			elif filter[0].lower() == 'advancedability':
@@ -284,16 +284,6 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 					#print(family,':',pFamily)
 					if family.lower() in pFamily:
 						removePokemon = True
-			if ability is not None:
-				if pBasicAbilities is not None:
-					if ability.lower() in pBasicAbilities:
-						removePokemon = True
-				if pAdvancedAbilities is not None:
-					if ability.lower() in pAdvancedAbilities:
-						removePokemon = True
-				if pHighAbility is not None:
-					if ability.lower() in pHighAbility:
-						removePokemon = True
 			if basicAbility is not None:
 				if pBasicAbilities is not None:
 					if basicAbility.lower() in pBasicAbilities:
@@ -362,16 +352,6 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 				if pFamily is not None:
 					#print(family,':',pFamily)
 					if family.lower() in pFamily:
-						removePokemon = False
-			if ability is not None:
-				if pBasicAbilities is not None:
-					if ability.lower() in pBasicAbilities:
-						removePokemon = False
-				if pAdvancedAbilities is not None:
-					if ability.lower() in pAdvancedAbilities:
-						removePokemon = False
-				if pHighAbility is not None:
-					if ability.lower() in pHighAbility:
 						removePokemon = False
 			if basicAbility is not None:
 				if pBasicAbilities is not None:
