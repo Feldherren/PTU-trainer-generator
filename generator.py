@@ -29,6 +29,7 @@ def loadData():
 def getRandomPokemon(type=None, level=None):
 	# if no type or level supplied, assume 'any' for each
 	# alternatively, match pokemon to trainer level if level is not specified?
+	# the above should probably be handled when calling this, not within the function
 	pokemon = None
 	return pokemon
 
@@ -106,6 +107,18 @@ def getPokemonCapabilities(pName):
 	if 'capabilities' in pokemonData[pName]:
 		capabilities = [x.lower().strip() for x in pokemonData[pName]['capabilities'].split(',')]
 	return capabilities
+
+def getPokemonHeightClass(pName):
+	height = None
+	if 'height_class' in pokemonData[pName]:
+		height = pokemonData[pName]['height_class'].lower()
+	return height
+
+def getPokemonWeightClass(pName):
+	weight = None
+	if 'weight_class' in pokemonData[pName]:
+		weight = pokemonData[pName]['weight_class'].lower()
+	return weight
 
 def getPokemonHMMoves(pName):
 	hmMoves = None
@@ -186,7 +199,7 @@ def getFilteredPokemonList(filterString=None):
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
-# TO-DO: fix egg-move search; isn't returning results for certain moves, like 'Curse'
+# TO-DO: make move searches return natural moves, such as 'High Jump Kick (N)' when searching for regular form of move ('High Jump Kick')
 def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
 	if list == None:
 		filteredList = []
