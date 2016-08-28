@@ -120,6 +120,14 @@ def getPokemonWeightClass(pName):
 		weight = pokemonData[pName]['weight_class'].lower()
 	return weight
 
+def getPokemonLevelMoves(pName):
+	levelMoves = dict()
+	if 'level_moves' in pokemonData[pName]:
+		for move in pokemonData[pName]['level_moves'].split(','):
+			m = move.split(':')
+			levelMoves[m[1].strip().lower()] = m[0].strip()
+	return levelMoves
+
 def getPokemonHMMoves(pName):
 	hmMoves = None
 	if 'hm_moves' in pokemonData[pName]:
@@ -186,6 +194,9 @@ def getFilteredPokemonList(filterString=None):
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
 			elif filter[0].lower() == 'highability':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
+			#elif filter[0].lower() == 'move':
+			elif filter[0].lower() == 'levelmove':
+				filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1])
 			elif filter[0].lower() == 'hm' or filter[0].lower() == 'hmmove':
 				filteredList = filterPokemonList(filterType=fType,list=filteredList,hmMove=filter[1])
 			elif filter[0].lower() == 'tm' or filter[0].lower() == 'tmmove':
@@ -200,7 +211,7 @@ def getFilteredPokemonList(filterString=None):
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
 # TO-DO: make move searches return natural moves, such as 'High Jump Kick (N)' when searching for regular form of move ('High Jump Kick')
-def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
+def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, levelMove=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -228,6 +239,7 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 		pAdvancedAbilities = getPokemonAdvancedAbilities(pName)
 		pHighAbility = getPokemonHighAbility(pName)
 		pCapabilities = getPokemonCapabilities(pName)
+		pLevelMoves = getPokemonLevelMoves(pName)
 		pHMMoves = getPokemonHMMoves(pName)
 		pTMMoves = getPokemonTMMoves(pName)
 		pEggMoves = getPokemonEggMoves(pName)
@@ -292,6 +304,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if highAbility is not None:
 				if pHighAbility is not None:
 					if highAbility.lower() in pHighAbility:
+						removePokemon = True
+			if levelMove is not None:
+				if pLevelMoves is not None:
+					if levelMove.lower() in pLevelMoves:
 						removePokemon = True
 			if hmMove is not None:
 				if pHMMoves is not None:
@@ -367,6 +383,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if highAbility is not None:
 				if pHighAbility is not None:
 					if highAbility.lower() in pHighAbility:
+						removePokemon = False
+			if levelMove is not None:
+				if pLevelMoves is not None:
+					if levelMove.lower() in pLevelMoves:
 						removePokemon = False
 			if hmMove is not None:
 				if pHMMoves is not None:
