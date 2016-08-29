@@ -11,9 +11,11 @@ parser = argparse.ArgumentParser(description='Currently just filters for pokemon
 args = parser.parse_args()
 
 pokemonData = dict()
+typeData = dict()
 
 def loadData():
 	# load data from ini files here
+	# load pokemon data
 	pokemonConfig = configparser.ConfigParser()
 	pokemonConfig.read('pokemon.ini')
 	for pokemon in pokemonConfig:
@@ -25,6 +27,15 @@ def loadData():
 				#print(pokemonConfig[pokemon][value])
 				tempPokemon[value] = pokemonConfig[pokemon][value]
 			pokemonData[pokemon] = tempPokemon
+	# load type data
+	typeConfig = configparser.ConfigParser()
+	typeConfig.read('types.ini')
+	for type in typeConfig:
+		if type is not 'DEFAULT':
+			tempType = dict()
+			for value in typeConfig[type]:
+				tempType[value] = [x.lower().strip() for x in typeConfig[type][value].split(',')]
+			typeData[type.lower()] = tempType
 
 def getRandomPokemon(type=None, level=None):
 	# if no type or level supplied, assume 'any' for each
@@ -33,16 +44,40 @@ def getRandomPokemon(type=None, level=None):
 	pokemon = None
 	return pokemon
 
+def checkTypeEffectiveness(attackingType, defendingType):
+	effectiveness = 1
+	#print("checkTypeEffectiveness:", attackingType, defendingType)
+	#print(typeData[attackingType]['super_effective'])
+	if defendingType in typeData[attackingType]['super_effective']:
+		#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= super effective!")
+		effectiveness = 2
+	elif defendingType in typeData[attackingType]['resistant']:
+		#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= resistant!")
+		effectiveness = 0.5
+	else:
+		if 'immune' in typeData[attackingType]:
+			if defendingType in typeData[attackingType]['immune']:
+				effectiveness = 0
+				#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= immune!")
+	#print(effectiveness)
+	return effectiveness
+
+def checkAttackEffectiveness(pokemon, attackType):
+	effectiveness = 1
+	for type in getPokemonTypes(pokemon):
+		effectiveness = effectiveness * checkTypeEffectiveness(attackType.lower(), type)
+	return effectiveness
+
+# checks the breeding compatibility between two pokemon of named species
+# returns the first matching egg group found, or nothing
 def checkCompatibility(a, b):
-	matches = list()
 	if 'Indeterminate' not in getPokemonEggGroups(a) and 'Indeterminate' not in getPokemonEggGroups(b):
 		if 'Ditto' in getPokemonEggGroups(a) or 'Ditto' in getPokemonEggGroups(b):
 			return 'Ditto'
 		else:
 			for eggGroup in getPokemonEggGroups(a):
 				if eggGroup in getPokemonEggGroups(b):
-					matches.append(eggGroup)
-					return matches
+					return eggGroup
 
 def printPokemonData(pName):
 	#pokemonData[pName]
@@ -52,6 +87,7 @@ def getPokemonTypes(pName):
 	types = None
 	if 'types' in pokemonData[pName]:
 		types = [x.lower().strip() for x in pokemonData[pName]['types'].split(',')]
+	#print(types)
 	return types
 
 def getPokemonMinimumLevel(pName):
@@ -415,7 +451,8 @@ while True:
 	elif mainMenu == "1":
 		print("1. Search")
 		print("2. Pokemon Information")
-		print("3. Check Compatibility")
+		print("3. Check Breeding Compatibility")
+		print("4. Check Attack Effectiveness")
 		print("R. Reload Data")
 		print("0. Back")
 		pokedexMenu = input("> ")
@@ -438,5 +475,9 @@ while True:
 				print(pokemonA,'+',pokemonB + ': Compatible (' + str(compatibility) + ')')
 			else:
 				print(pokemonA,'+',pokemonB + ': Incompatible')
+		elif pokedexMenu == "4": # Check Attack Effectiveness
+			pName = input("Pokemon name> ")
+			aType = input("Attacking type> ")
+			print("Damage X" + str(checkAttackEffectiveness(pName, aType)))
 		elif pokedexMenu == "R": # Reload Data
 			loadData()
