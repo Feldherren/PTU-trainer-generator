@@ -48,17 +48,19 @@ def checkTypeEffectiveness(attackingType, defendingType):
 	effectiveness = 1
 	#print("checkTypeEffectiveness:", attackingType, defendingType)
 	#print(typeData[attackingType]['super_effective'])
-	if defendingType in typeData[attackingType]['super_effective']:
-		#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= super effective!")
-		effectiveness = 2
-	elif defendingType in typeData[attackingType]['resistant']:
-		#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= resistant!")
-		effectiveness = 0.5
-	else:
-		if 'immune' in typeData[attackingType]:
-			if defendingType in typeData[attackingType]['immune']:
-				effectiveness = 0
-				#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= immune!")
+	if 'super_effective' in typeData[attackingType]:
+		if defendingType in typeData[attackingType]['super_effective']:
+			#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= super effective!")
+			effectiveness = 2
+		elif 'resistant' in typeData[attackingType]:
+			if defendingType in typeData[attackingType]['resistant']:
+				#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= resistant!")
+				effectiveness = 0.5
+			else:
+				if 'immune' in typeData[attackingType]:
+					if defendingType in typeData[attackingType]['immune']:
+						effectiveness = 0
+						#print("checkTypeEffectiveness:", attackingType, "attacking", defendingType, "= immune!")
 	#print(effectiveness)
 	return effectiveness
 
@@ -67,6 +69,24 @@ def checkAttackEffectiveness(pokemon, attackType):
 	for type in getPokemonTypes(pokemon):
 		effectiveness = effectiveness * checkTypeEffectiveness(attackType.lower(), type)
 	return effectiveness
+
+def checkDefensiveEffectiveness(pokemon):
+	defense = dict()
+	for attackType in typeData:
+		effectiveness = checkAttackEffectiveness(pokemon, attackType)
+		if effectiveness in defense:
+			defense[effectiveness].append(attackType)
+		else:
+			defense[effectiveness] = [attackType]
+	return defense
+
+def printDefensiveEffectiveness(defense):
+	order = []
+	for e in defense:
+		order.append(e)
+	order.sort(reverse=True)
+	for effectiveness in order:
+		print('X' + str(effectiveness) + ': ' + ', '.join(defense[effectiveness]))
 
 # checks the breeding compatibility between two pokemon of named species
 # returns the first matching egg group found, or nothing
@@ -477,7 +497,13 @@ while True:
 				print(pokemonA,'+',pokemonB + ': Incompatible')
 		elif pokedexMenu == "4": # Check Attack Effectiveness
 			pName = input("Pokemon name> ")
-			aType = input("Attacking type> ")
-			print("Damage X" + str(checkAttackEffectiveness(pName, aType)))
+			#aType = input("Attacking type> ")
+			#print("Damage X" + str(checkAttackEffectiveness(pName, aType)))
+			# instead, get all attack effectivenesses from this option
+			printDefensiveEffectiveness(checkDefensiveEffectiveness(pName))
 		elif pokedexMenu == "R": # Reload Data
 			loadData()
+		else:
+			pokedexMenu = -1
+	else:
+		mainMenu = "-1"
