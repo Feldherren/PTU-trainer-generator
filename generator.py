@@ -4,6 +4,7 @@
 
 import configparser #https://docs.python.org/3/library/configparser.html
 import argparse #https://docs.python.org/3/library/argparse.html
+import random #https://docs.python.org/3.5/library/random.html
 
 parser = argparse.ArgumentParser(description='Currently just filters for pokemon based on a supplied filter string')
 #parser.add_argument('filterstring', help='string to filter pokemon by')
@@ -12,6 +13,13 @@ args = parser.parse_args()
 
 pokemonData = dict()
 typeData = dict()
+natureData = dict()
+# pokemonConfig = configparser.ConfigParser()
+# pokemonConfig.read('pokemon.ini')
+# typeConfig = configparser.ConfigParser()
+# typeConfig.read('types.ini')
+natureConfig = configparser.ConfigParser()
+natureConfig.read('natures.ini')
 
 def loadData():
 	# load data from ini files here
@@ -36,12 +44,82 @@ def loadData():
 			for value in typeConfig[type]:
 				tempType[value] = [x.lower().strip() for x in typeConfig[type][value].split(',')]
 			typeData[type.lower()] = tempType
+	# load nature data
+		
+def generateRandomTrainer(team=False, minLevel=1, maxLevel=50, gender=None, noPokemon=6):
+	trainer = dict()
+	# generate trainer details
+	# set level
+	trainer['level'] = random.choice(range(minLevel, maxLevel))
+	# set gender
+	if gender is not None:
+		trainer['gender'] = gender
+	else:
+		trainer['gender'] = random.choice(('male', 'female'))
+	# combat stats
+	statPoints = 10
+	combatStats = {'hp':10, 'attack':5, 'defense':5, 'specialAttack':5, 'specialDefense':5, 'speed':5}
+	eligibleStats = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
+	for i in range(statPoints):
+		randomStat = random.choice(eligibleStats)
+		combatStats[randomStat] = combatStats[randomStat]+1
+		if randomStat == 'hp':
+			if combatStats[randomStat] >= 15:
+				eligibleStats.remove(randomStat)
+		else:
+			if combatStats[randomStat] >= 10:
+				eligibleStats.remove(randomStat)
+	trainer['combatStats'] = combatStats
+	# generate pokemon team
+	# currently just adds names to a list, with no filtering, but should at least filter based on trainer classes
+	# later, generate pokemon instead of getting a random pokemon species?
+	pTeam = []
+	for i in range(noPokemon):
+		pTeam.append(getRandomPokemon())
+	trainer['pokemon'] = pTeam
+	return trainer
+
+def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel=100):
+	pokemon = dict()
+	# set level
+	#
+	pokemon['level'] = random.choice(range(minLevel, maxLevel))
+	# set species
+	# if we want filtered species generation, do that before using this function and supply the result to this
+	if species is None:
+		species = getRandomPokemon(level=pokemon['level'])
+	pokemon['species'] = species
+	# set nature
+	# should possibly get natures from elsewhere; list set up elsewhere?
+	# can use that for sanity-checking supplied natures
+	if nature is not None:
+		pokemon['nature'] = nature
+	else:
+		pokemon['nature'] = random.choice(natureConfig.sections())
+	# set combat stats
+	combatStats = getPokemonBaseStats(species)
+	# check if shiny
+	shinyRoll = random.choice(range(1,100))
+	if shinyRoll == 100:
+		shiny = True
+	pokemon['shiny'] = shiny
+	return pokemon
 
 def getRandomPokemon(type=None, level=None):
 	# if no type or level supplied, assume 'any' for each
 	# alternatively, match pokemon to trainer level if level is not specified?
 	# the above should probably be handled when calling this, not within the function
 	pokemon = None
+	j = []
+	if type is not None:
+		typeString = 'type=' + type
+		j.append(typeString)
+	if level is not None:
+		levelString = 'level=' + str(level)
+		j.append(levelString)
+	searchString = ';'.join(j)
+	l = getFilteredPokemonList(searchString)
+	pokemon = random.choice(l)
 	return pokemon
 
 def checkTypeEffectiveness(attackingType, defendingType):
@@ -103,6 +181,16 @@ def printPokemonData(pName):
 	#pokemonData[pName]
 	print(pName,'(p'+pokemonData[pName]['page']+')')
 
+def getPokemonBaseStats(pName):
+	baseStats = dict()
+	baseStats['hp'] = pokemonData[pName]['base_hp']
+	baseStats['attack'] = pokemonData[pName]['base_attack']
+	baseStats['defense'] = pokemonData[pName]['base_defense']
+	baseStats['special_attack'] = pokemonData[pName]['base_special_attack']
+	baseStats['special_defense'] = pokemonData[pName]['base_special_defense']
+	baseStats['speed'] = pokemonData[pName]['base_speed']
+	return baseStats
+	
 def getPokemonTypes(pName):
 	types = None
 	if 'types' in pokemonData[pName]:
@@ -209,6 +297,8 @@ def getPokemonTutorMoves(pName):
 	return tutorMoves
 
 # filterString example: 'type=Grass;type=Poison'
+# change this to also optionally take variables like filterPokemonList?
+# write a function that interprets the filterstring for this?
 def getFilteredPokemonList(filterString=None):
 	filteredList = []
 	for pokemon in pokemonData:
@@ -223,45 +313,46 @@ def getFilteredPokemonList(filterString=None):
 		#print(filterString)
 		for f in filterString.split(';'):
 			filter = f.split('=')
-			print("Filtering for:",filter[0],'=',filter[1])
-			fType='OR'
-			if filter[1][:1] == '!':
-				fType='NOT'
-				filter[1] = filter[1][1:]
-			if filter[0].lower() == 'name':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,name=filter[1])
-			if filter[0].lower() == 'type':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,type=filter[1])
-			elif filter[0].lower() == 'level':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,level=int(filter[1]))
-			elif filter[0].lower() == 'diet':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,diet=filter[1])
-			elif filter[0].lower() == 'habitat':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,habitat=filter[1])
-			elif filter[0].lower() == 'egggroup':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,eggGroup=filter[1])
-			elif filter[0].lower() == 'family':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,family=filter[1])
-			elif filter[0].lower() == 'ability':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1],advancedAbility=filter[1],highAbility=filter[1])
-			elif filter[0].lower() == 'basicability':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1])
-			elif filter[0].lower() == 'advancedability':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
-			elif filter[0].lower() == 'highability':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
-			elif filter[0].lower() == 'move':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1],hmMove=filter[1],tmMove=filter[1],tutorMove=filter[1],eggMove=filter[1])
-			elif filter[0].lower() == 'levelmove':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1])
-			elif filter[0].lower() == 'hm' or filter[0].lower() == 'hmmove':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,hmMove=filter[1])
-			elif filter[0].lower() == 'tm' or filter[0].lower() == 'tmmove':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,tmMove=filter[1])
-			elif filter[0].lower() == 'tutor' or filter[0].lower() == 'tutormove':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,tutorMove=filter[1])
-			elif filter[0].lower() == 'egg' or filter[0].lower() == 'eggmove':
-				filteredList = filterPokemonList(filterType=fType,list=filteredList,eggMove=filter[1])
+			if filter[0] is not '':
+				#print("Filtering for:",filter[0],'=',filter[1])
+				fType='OR'
+				if filter[1][:1] == '!':
+					fType='NOT'
+					filter[1] = filter[1][1:]
+				if filter[0].lower() == 'name':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,name=filter[1])
+				if filter[0].lower() == 'type':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,type=filter[1])
+				elif filter[0].lower() == 'level':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,level=int(filter[1]))
+				elif filter[0].lower() == 'diet':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,diet=filter[1])
+				elif filter[0].lower() == 'habitat':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,habitat=filter[1])
+				elif filter[0].lower() == 'egggroup':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,eggGroup=filter[1])
+				elif filter[0].lower() == 'family':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,family=filter[1])
+				elif filter[0].lower() == 'ability':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1],advancedAbility=filter[1],highAbility=filter[1])
+				elif filter[0].lower() == 'basicability':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,basicAbility=filter[1])
+				elif filter[0].lower() == 'advancedability':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,advancedAbility=filter[1])
+				elif filter[0].lower() == 'highability':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,highAbility=filter[1])
+				elif filter[0].lower() == 'move':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1],hmMove=filter[1],tmMove=filter[1],tutorMove=filter[1],eggMove=filter[1])
+				elif filter[0].lower() == 'levelmove':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,levelMove=filter[1])
+				elif filter[0].lower() == 'hm' or filter[0].lower() == 'hmmove':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,hmMove=filter[1])
+				elif filter[0].lower() == 'tm' or filter[0].lower() == 'tmmove':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,tmMove=filter[1])
+				elif filter[0].lower() == 'tutor' or filter[0].lower() == 'tutormove':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,tutorMove=filter[1])
+				elif filter[0].lower() == 'egg' or filter[0].lower() == 'eggmove':
+					filteredList = filterPokemonList(filterType=fType,list=filteredList,eggMove=filter[1])
 	
 	return filteredList
 
@@ -275,8 +366,7 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 		#print(filteredList)
 		for pokemon in pokemonData:
 			#print(pokemon)
-			if pokemon is not 'DEFAULT':
-				filteredList.append(pokemon)
+			filteredList.append(pokemon)
 	else:
 		filteredList = list
 	
@@ -464,6 +554,7 @@ mainMenu = "-1"
 while True:
 	if mainMenu == "-1":
 		print("1. Pokedex")
+		print("2. Random Generation")
 		print("0. Quit")
 		mainMenu = input("> ")
 	elif mainMenu == "0":
@@ -504,6 +595,18 @@ while True:
 		elif pokedexMenu == "R": # Reload Data
 			loadData()
 		else:
-			pokedexMenu = -1
+			pokedexMenu = '-1'
+	elif mainMenu == "2":
+		generatorMenu = '-1'
+		print("1. Random Trainer")
+		print("2. Random Pokemon")
+		print("0. Back")
+		generatorMenu = input("> ")
+		if generatorMenu == "0": # Back
+			mainMenu = "-1"
+		elif generatorMenu == "1": # Random Trainer
+			print(generateRandomTrainer())
+		elif generatorMenu == "2": # Random Pokemon
+			print(generatePokemon())
 	else:
 		mainMenu = "-1"
