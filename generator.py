@@ -1,6 +1,9 @@
 # possibly not necessary to track what evolutions a pokemon has
-# actually, necessary to say we want something of a particular family
-# To-DO: compatibility check, re: egg groups?
+# actually, necessary to say we want something of a particular family?
+
+# TO-DO: get type data directly from config, instead of loading it into a dict
+# TO-DO: get pokemon data directly from config, instead of loading it into a dict
+# in these cases, not just a matter of changing typeData to typeConfig everywhere
 
 import configparser #https://docs.python.org/3/library/configparser.html
 import argparse #https://docs.python.org/3/library/argparse.html
@@ -18,6 +21,7 @@ natureData = dict()
 # pokemonConfig.read('pokemon.ini')
 # typeConfig = configparser.ConfigParser()
 # typeConfig.read('types.ini')
+# the above doesn't work
 natureConfig = configparser.ConfigParser()
 natureConfig.read('natures.ini')
 
@@ -44,7 +48,6 @@ def loadData():
 			for value in typeConfig[type]:
 				tempType[value] = [x.lower().strip() for x in typeConfig[type][value].split(',')]
 			typeData[type.lower()] = tempType
-	# load nature data
 		
 def generateRandomTrainer(team=False, minLevel=1, maxLevel=50, gender=None, noPokemon=6):
 	trainer = dict()
@@ -82,22 +85,31 @@ def generateRandomTrainer(team=False, minLevel=1, maxLevel=50, gender=None, noPo
 def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel=100):
 	pokemon = dict()
 	# set level
-	#
+	# level should probably affect evolution tier? Currently getting a lot of level 97 Fletchlings or similar
 	pokemon['level'] = random.choice(range(minLevel, maxLevel))
 	# set species
 	# if we want filtered species generation, do that before using this function and supply the result to this
 	if species is None:
 		species = getRandomPokemon(level=pokemon['level'])
 	pokemon['species'] = species
+	# set combat stats
+	combatStats = getPokemonBaseStats(species)
+	pokemon['combatStats'] = combatStats
 	# set nature
-	# should possibly get natures from elsewhere; list set up elsewhere?
-	# can use that for sanity-checking supplied natures
 	if nature is not None:
 		pokemon['nature'] = nature
 	else:
 		pokemon['nature'] = random.choice(natureConfig.sections())
-	# set combat stats
-	combatStats = getPokemonBaseStats(species)
+	# change base stats due to nature
+	if natureConfig[pokemon['nature']]['raises'] == 'hp':
+		pokemon['combatStats'][natureConfig[pokemon['nature']]['raises']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['raises']] + 1
+	else:
+		pokemon['combatStats'][natureConfig[pokemon['nature']]['raises']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['raises']] + 2
+	if natureConfig[pokemon['nature']]['lowers'] == 'hp':
+		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 1
+	else:
+		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 2
+		
 	# check if shiny
 	shinyRoll = random.choice(range(1,100))
 	if shinyRoll == 100:
@@ -183,12 +195,12 @@ def printPokemonData(pName):
 
 def getPokemonBaseStats(pName):
 	baseStats = dict()
-	baseStats['hp'] = pokemonData[pName]['base_hp']
-	baseStats['attack'] = pokemonData[pName]['base_attack']
-	baseStats['defense'] = pokemonData[pName]['base_defense']
-	baseStats['special_attack'] = pokemonData[pName]['base_special_attack']
-	baseStats['special_defense'] = pokemonData[pName]['base_special_defense']
-	baseStats['speed'] = pokemonData[pName]['base_speed']
+	baseStats['hp'] = int(pokemonData[pName]['base_hp'])
+	baseStats['attack'] = int(pokemonData[pName]['base_attack'])
+	baseStats['defense'] = int(pokemonData[pName]['base_defense'])
+	baseStats['special_attack'] = int(pokemonData[pName]['base_special_attack'])
+	baseStats['special_defense'] = int(pokemonData[pName]['base_special_defense'])
+	baseStats['speed'] = int(pokemonData[pName]['base_speed'])
 	return baseStats
 	
 def getPokemonTypes(pName):
