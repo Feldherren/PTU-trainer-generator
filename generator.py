@@ -92,8 +92,8 @@ def printDefensiveEffectiveness(defense):
 # returns the first matching egg group found, or nothing
 def checkCompatibility(a, b):
 	if 'Indeterminate' not in getPokemonEggGroups(a) and 'Indeterminate' not in getPokemonEggGroups(b):
-		if 'Ditto' in getPokemonEggGroups(a) or 'Ditto' in getPokemonEggGroups(b):
-			return 'Ditto'
+		if 'ditto' in getPokemonEggGroups(a) or 'ditto' in getPokemonEggGroups(b):
+			return 'ditto'
 		else:
 			for eggGroup in getPokemonEggGroups(a):
 				if eggGroup in getPokemonEggGroups(b):
