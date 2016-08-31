@@ -3,6 +3,9 @@
 
 # TO-DO: get type data directly from config, instead of loading it into a dict
 # TO-DO: get pokemon data directly from config, instead of loading it into a dict
+# TO=DO: searching for legendary/fossil pokemon is a kludge, should be fixed somehow
+#	EG. currently getFilteredPokemonList takes 'legendary=False' in string, goes 'fType='NOT',legendary=True' to filterPokemonList regardless; instead filterPokemonList should only care about True/False/None
+#	Probably need to overhaul filterPokemonList entirely, as the fType thing is annoying to work with
 # in these cases, not just a matter of changing typeData to typeConfig everywhere
 
 import configparser #https://docs.python.org/3/library/configparser.html
@@ -21,7 +24,7 @@ natureData = dict()
 # pokemonConfig.read('pokemon.ini')
 # typeConfig = configparser.ConfigParser()
 # typeConfig.read('types.ini')
-# the above doesn't work
+# the above doesn't work by itself
 natureConfig = configparser.ConfigParser()
 natureConfig.read('natures.ini')
 
@@ -48,8 +51,9 @@ def loadData():
 			for value in typeConfig[type]:
 				tempType[value] = [x.lower().strip() for x in typeConfig[type][value].split(',')]
 			typeData[type.lower()] = tempType
-		
-def generateRandomTrainer(team=False, minLevel=1, maxLevel=50, gender=None, noPokemon=6):
+
+# set legendaryPokemon and fossilPokemon to None for no-preference
+def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=False, minLevel=1, maxLevel=50, gender=None, noPokemon=None):
 	trainer = dict()
 	# generate trainer details
 	# set level
@@ -77,11 +81,16 @@ def generateRandomTrainer(team=False, minLevel=1, maxLevel=50, gender=None, noPo
 	# currently just adds names to a list, with no filtering, but should at least filter based on trainer classes
 	# later, generate pokemon instead of getting a random pokemon species?
 	pTeam = []
+	if noPokemon is None:
+		# just equal distribution of team size, here
+		# a distribution more biased towards the middle would be (1,2,2,3,3,3,4,4,4,5,5,6,6)
+		noPokemon = random.choice((1,2,3,4,5,6))
 	for i in range(noPokemon):
-		pTeam.append(getRandomPokemon())
+		pTeam.append(getRandomPokemon(legendary=legendaryPokemon, fossil=fossilPokemon))
 	trainer['pokemon'] = pTeam
 	return trainer
 
+# legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
 def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel=100):
 	pokemon = dict()
 	# set level
@@ -117,7 +126,8 @@ def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel
 	pokemon['shiny'] = shiny
 	return pokemon
 
-def getRandomPokemon(type=None, level=None):
+# legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
+def getRandomPokemon(type=None, level=None, legendary=None, fossil=None):
 	# if no type or level supplied, assume 'any' for each
 	# alternatively, match pokemon to trainer level if level is not specified?
 	# the above should probably be handled when calling this, not within the function
@@ -129,6 +139,18 @@ def getRandomPokemon(type=None, level=None):
 	if level is not None:
 		levelString = 'level=' + str(level)
 		j.append(levelString)
+	if legendary is not None:
+		if legendary is False:
+			legendaryString = 'legendary=False'
+		elif legendary is True:
+			legendaryString = 'legendary=True'
+		j.append(legendaryString)
+	if fossil is not None:
+		if fossil is False:
+			fossilString = 'fossil=False'
+		elif fossil is True:
+			fossilString = 'fossil=True'
+		j.append(fossilString)
 	searchString = ';'.join(j)
 	l = getFilteredPokemonList(searchString)
 	pokemon = random.choice(l)
@@ -308,6 +330,20 @@ def getPokemonTutorMoves(pName):
 		tutorMoves = [x.lower().strip() for x in pokemonData[pName]['tutor_moves'].split(',')]
 	return tutorMoves
 
+def isLegendary(pName):
+	legendary = False
+	if 'legendary' in pokemonData[pName]:
+		if pokemonData[pName]['legendary'] == 'True':
+			legendary = True
+	return legendary
+
+def isFossil(pName):
+	fossil = False
+	if 'fossil' in pokemonData[pName]:
+		if pokemonData[pName]['fossil'] == 'True':
+			fossil = True
+	return fossil
+
 # filterString example: 'type=Grass;type=Poison'
 # change this to also optionally take variables like filterPokemonList?
 # write a function that interprets the filterstring for this?
@@ -328,9 +364,10 @@ def getFilteredPokemonList(filterString=None):
 			if filter[0] is not '':
 				#print("Filtering for:",filter[0],'=',filter[1])
 				fType='OR'
-				if filter[1][:1] == '!':
-					fType='NOT'
-					filter[1] = filter[1][1:]
+				if filter[1] is not None:
+					if filter[1][:1] == '!':
+						fType='NOT'
+						filter[1] = filter[1][1:]
 				if filter[0].lower() == 'name':
 					filteredList = filterPokemonList(filterType=fType,list=filteredList,name=filter[1])
 				if filter[0].lower() == 'type':
@@ -365,13 +402,23 @@ def getFilteredPokemonList(filterString=None):
 					filteredList = filterPokemonList(filterType=fType,list=filteredList,tutorMove=filter[1])
 				elif filter[0].lower() == 'egg' or filter[0].lower() == 'eggmove':
 					filteredList = filterPokemonList(filterType=fType,list=filteredList,eggMove=filter[1])
+				elif filter[0].lower() == 'legendary':
+					if filter[1] == 'True':
+						filteredList = filterPokemonList(list=filteredList,legendary=True)
+					if filter[1] == 'False':
+						filteredList = filterPokemonList(filterType='NOT',list=filteredList,legendary=True)
+				elif filter[0].lower() == 'fossil':
+					if filter[1] == 'True':
+						filteredList = filterPokemonList(list=filteredList,fossil=True)
+					if filter[1] == 'False':
+						filteredList = filterPokemonList(filterType='NOT',list=filteredList,fossil=True)
 	
 	return filteredList
 
 # just returns a list of pokemon names; these can be used with pokemonData to get actual data
 # by default returns any pokemon that matches any filter condition. Can be set to return only pokemon that do not match filter conditions
 # TO-DO: make move searches return natural moves, such as 'High Jump Kick (N)' when searching for regular form of move ('High Jump Kick')
-def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, levelMove=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None):
+def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=None, diet=None, habitat=None, eggGroup=None, family=None, ability=None, basicAbility=None, advancedAbility=None, highAbility=None, levelMove=None, hmMove=None, tmMove=None, eggMove=None, tutorMove=None, legendary=None, fossil=None):
 	if list == None:
 		filteredList = []
 		# populate with everything, then remove as necessary
@@ -403,6 +450,10 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 		pTMMoves = getPokemonTMMoves(pName)
 		pEggMoves = getPokemonEggMoves(pName)
 		pTutorMoves = getPokemonTutorMoves(pName)
+		pFossil = isFossil(pName)
+		pLegendary = isLegendary(pName)
+		#print(pFossil)
+		#print(pLegendary)
 		
 		# now filter
 		if filterType == 'NOT':
@@ -462,9 +513,13 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 				if pHMMoves is not None:
 					if hmMove.lower() in pHMMoves:
 						removePokemon = True
+					elif 'any' in pHMMoves:
+						removePokemon = True
 			if tmMove is not None:
 				if pTMMoves is not None:
 					if tmMove.lower() in pTMMoves:
+						removePokemon = True
+					elif 'any' in pTMMoves:
 						removePokemon = True
 			if eggMove is not None:
 				if pEggMoves is not None:
@@ -473,6 +528,16 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if tutorMove is not None:
 				if pTutorMoves is not None:
 					if tutorMove.lower() in pTutorMoves:
+						removePokemon = True
+					elif 'any' in pTutorMoves:
+						removePokemon = True
+			if legendary is not None:
+				if pLegendary is True:
+					if legendary == True:
+						removePokemon = True
+			if fossil is not None:
+				if pFossil is True:
+					if fossil == True:
 						removePokemon = True
 		elif filterType == 'OR':
 			removePokemon = True
@@ -531,9 +596,13 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 				if pHMMoves is not None:
 					if hmMove.lower() in pHMMoves:
 						removePokemon = False
+					elif 'any' in pHMMoves:
+						removePokemon = False
 			if tmMove is not None:
 				if pTMMoves is not None:
 					if tmMove.lower() in pTMMoves:
+						removePokemon = False
+					elif 'any' in pTMMoves:
 						removePokemon = False
 			if eggMove is not None:
 				if pEggMoves is not None:
@@ -542,6 +611,20 @@ def filterPokemonList(filterType='OR', list=None, name=None, type=None, level=No
 			if tutorMove is not None:
 				if pTutorMoves is not None:
 					if tutorMove.lower() in pTutorMoves:
+						removePokemon = False
+					elif 'any' in pEggMoves:
+						removePokemon = False
+			if legendary is not None:
+				if pLegendary is True:
+					if legendary == False:
+						removePokemon = True
+					elif legendary is not None:
+						removePokemon = False
+			if fossil is not None:
+				if pFossil is True:
+					if fossil == False:
+						removePokemon = True
+					elif fossil is not None:
 						removePokemon = False
 		
 		#print(pName,':',removePokemon)
