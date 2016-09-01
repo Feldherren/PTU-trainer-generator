@@ -91,7 +91,7 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 	return trainer
 
 # legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
-def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel=100):
+def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLevel=1, maxLevel=100):
 	pokemon = dict()
 	# set level
 	# level should probably affect evolution tier? Currently getting a lot of level 97 Fletchlings or similar
@@ -118,7 +118,33 @@ def generatePokemon(shiny=False, species=None, nature=None, minLevel=1, maxLevel
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 1
 	else:
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 2
-		
+	
+	# determine what moves it has
+	# get list of available moves; cull moves only available above its level, and tutor/tm/hm moves if not trained; only egg moves and tutor moves should be available to regular wild pokemon
+	# TO-DO: currently only respects the current species; won't get moves from earlier evolutions, for example So, simulate levelling up to the current level, from 1? At least, for wild species; trainers could have earlier moves tutored
+	movesAvailable = []
+	movesLearned = []
+	levelMoves = getPokemonLevelMoves(pokemon['species'])
+	for move in levelMoves:
+		if int(levelMoves[move]) <= pokemon['level']:
+			movesAvailable.append(move)
+	if getPokemonEggMoves(pokemon['species']) is not None:
+		for move in getPokemonEggMoves(pokemon['species']):
+			movesAvailable.append(move)
+	if trained:
+		# this should respect tutor points, eventually
+		for move in getPokemonHMMoves(pokemon['species']):
+			movesAvailable.append(move)
+		for move in getPokemonTMMoves(pokemon['species']):
+			movesAvailable.append(move)
+		for move in getPokemonTutorMoves(pokemon['species']):
+			movesAvailable.append(move)
+	# randomly choose moves and pop them from the list as they're picked, to avoid duplicates
+	while len(movesAvailable) > 0 and len(movesLearned) < 6:
+		move = random.choice(movesAvailable)
+		movesLearned.append(move)
+		movesAvailable.pop(movesAvailable.index(move))
+	pokemon['movesLearned'] = movesLearned
 	# check if shiny
 	shinyRoll = random.choice(range(1,100))
 	if shinyRoll == 100:
