@@ -25,14 +25,16 @@ natureData = dict()
 # typeConfig = configparser.ConfigParser()
 # typeConfig.read('types.ini')
 # the above doesn't work by itself
+dataConfig = configparser.ConfigParser()
+dataConfig.read('datafiles.ini')
 natureConfig = configparser.ConfigParser()
-natureConfig.read('natures.ini')
+natureConfig.read(dataConfig['DATA']['natures'])
 
 def loadData():
 	# load data from ini files here
 	# load pokemon data
 	pokemonConfig = configparser.ConfigParser()
-	pokemonConfig.read('pokemon.ini')
+	pokemonConfig.read(dataConfig['DATA']['pokedex'])
 	for pokemon in pokemonConfig:
 		#print(pokemon)
 		# The 'DEFAULT' entry is getting added here, for some reason; a section with the name 'DEFAULT'? Despite it not existing?
@@ -44,7 +46,7 @@ def loadData():
 			pokemonData[pokemon] = tempPokemon
 	# load type data
 	typeConfig = configparser.ConfigParser()
-	typeConfig.read('types.ini')
+	typeConfig.read(dataConfig['DATA']['types'])
 	for type in typeConfig:
 		if type is not 'DEFAULT':
 			tempType = dict()
