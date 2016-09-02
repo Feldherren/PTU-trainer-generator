@@ -29,6 +29,8 @@ dataConfig = configparser.ConfigParser()
 dataConfig.read('datafiles.ini')
 natureConfig = configparser.ConfigParser()
 natureConfig.read(dataConfig['DATA']['natures'])
+movesConfig = configparser.ConfigParser()
+movesConfig.read(dataConfig['DATA']['moves'])
 
 def loadData():
 	# load data from ini files here
@@ -78,19 +80,29 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 		else:
 			if combatStats[randomStat] >= 10:
 				eligibleStats.remove(randomStat)
+	# now applying stat points from levels
+	statPoints = trainer['level']
+	eligibleStats = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
+	for i in range(statPoints):
+		randomStat = random.choice(eligibleStats)
+		combatStats[randomStat] = combatStats[randomStat]+1
 	trainer['combatStats'] = combatStats
 	# generate pokemon team
 	# currently just adds names to a list, with no filtering, but should at least filter based on trainer classes
-	# later, generate pokemon instead of getting a random pokemon species?
+	# should this have a chance of generating untrained pokemon?
 	pTeam = []
 	if noPokemon is None:
 		# just equal distribution of team size, here
 		# a distribution more biased towards the middle would be (1,2,2,3,3,3,4,4,4,5,5,6,6)
 		noPokemon = random.choice((1,2,3,4,5,6))
 	for i in range(noPokemon):
-		pTeam.append(getRandomPokemon(legendary=legendaryPokemon, fossil=fossilPokemon))
+		pTeam.append(generatePokemon(species=getRandomPokemon(legendary=legendaryPokemon, fossil=fossilPokemon), trained=True))
 	trainer['pokemon'] = pTeam
 	return trainer
+
+def printTrainer(trainer):
+	for pokemon in trainer['pokemon']:
+		printPokemon(pokemon)
 
 # legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
 def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLevel=1, maxLevel=100):
@@ -98,13 +110,17 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	# set level
 	# level should probably affect evolution tier? Currently getting a lot of level 97 Fletchlings or similar
 	pokemon['level'] = random.choice(range(minLevel, maxLevel))
+	# determine tutor point total; pokemon start with 1 and gain 1 every 5 levels
+	pokemon['tutorPoints'] = int(int(pokemon['level'])/5)+1
 	# set species
 	# if we want filtered species generation, do that before using this function and supply the result to this
 	if species is None:
 		species = getRandomPokemon(level=pokemon['level'])
 	pokemon['species'] = species
+	# check evolution level, scaling chance to evolve the thing based on how many levels from the minimum for an evolution?
 	# set combat stats
 	combatStats = getPokemonBaseStats(species)
+	# TO-DO: assign level-up points, respecting BSR
 	pokemon['combatStats'] = combatStats
 	# set nature
 	if nature is not None:
@@ -127,20 +143,36 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	movesAvailable = []
 	movesLearned = []
 	levelMoves = getPokemonLevelMoves(pokemon['species'])
-	for move in levelMoves:
-		if int(levelMoves[move]) <= pokemon['level']:
-			movesAvailable.append(move)
-	if getPokemonEggMoves(pokemon['species']) is not None:
-		for move in getPokemonEggMoves(pokemon['species']):
-			movesAvailable.append(move)
-	if trained:
-		# this should respect tutor points, eventually
-		for move in getPokemonHMMoves(pokemon['species']):
-			movesAvailable.append(move)
-		for move in getPokemonTMMoves(pokemon['species']):
-			movesAvailable.append(move)
-		for move in getPokemonTutorMoves(pokemon['species']):
-			movesAvailable.append(move)
+	if pokemon['species'] == 'Mew':
+		for move in levelMoves:
+			if int(levelMoves[move]) <= pokemon['level']:
+				movesAvailable.append(move)
+		if getPokemonEggMoves(pokemon['species']) is not None:
+			for move in getPokemonEggMoves(pokemon['species']):
+				movesAvailable.append(move)
+		if trained:
+			# get all moves from moves.ini, as they can all be tutored
+			for move in movesConfig:
+				movesAvailable.append(move)
+	else:
+		for move in levelMoves:
+			if int(levelMoves[move]) <= pokemon['level']:
+				movesAvailable.append(move)
+		if getPokemonEggMoves(pokemon['species']) is not None:
+			for move in getPokemonEggMoves(pokemon['species']):
+				movesAvailable.append(move)
+		if trained:
+			# this should respect tutor points, eventually
+			# should also respect Mew with its 'Any' at some point
+			if getPokemonHMMoves(pokemon['species']) is not None:
+				for move in getPokemonHMMoves(pokemon['species']):
+					movesAvailable.append(move)
+			if getPokemonTMMoves(pokemon['species']) is not None:
+				for move in getPokemonTMMoves(pokemon['species']):
+					movesAvailable.append(move)
+			if getPokemonTutorMoves(pokemon['species']) is not None:
+				for move in getPokemonTutorMoves(pokemon['species']):
+					movesAvailable.append(move)
 	# randomly choose moves and pop them from the list as they're picked, to avoid duplicates
 	while len(movesAvailable) > 0 and len(movesLearned) < 6:
 		move = random.choice(movesAvailable)
@@ -152,7 +184,18 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	if shinyRoll == 100:
 		shiny = True
 	pokemon['shiny'] = shiny
+	# set name
+	# check if trainer prefers nicknames, and give a nickname if so?
+	pokemon['name'] = species
 	return pokemon
+
+def printPokemon(pokemon):
+	print('Name:', pokemon['name'])
+	print('Species:', pokemon['species'])
+	print('Level:', pokemon['level'])
+	print('\nMoves Known:')
+	for move in pokemon['moves']:
+		print(move)
 
 # legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
 def getRandomPokemon(type=None, level=None, legendary=None, fossil=None):
