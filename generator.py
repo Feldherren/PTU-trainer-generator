@@ -187,7 +187,8 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	while len(movesAvailable) > 0 and len(movesLearned) < 6:
 		move = random.choice(movesAvailable)
 		movesLearned.append(move)
-		movesAvailable.pop(movesAvailable.index(move))
+		for i in range(movesAvailable.count(move)):
+			movesAvailable.pop(movesAvailable.index(move))
 	pokemon['movesLearned'] = movesLearned
 	# check if shiny
 	shinyRoll = random.choice(range(1,100))
