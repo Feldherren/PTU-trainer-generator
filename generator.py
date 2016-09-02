@@ -80,7 +80,7 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 		else:
 			if combatStats[randomStat] >= 10:
 				eligibleStats.remove(randomStat)
-	# now applying stat points from levels
+	# now apply stat points from levels
 	statPoints = trainer['level']
 	eligibleStats = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
 	for i in range(statPoints):
@@ -101,6 +101,16 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 	return trainer
 
 def printTrainer(trainer):
+	print('Level:', trainer['level'])
+	print('Gender:', trainer['gender'])
+	print('\nCombat Stats')
+	print('HP:', trainer['combatStats']['hp'])
+	print('Attack:', trainer['combatStats']['attack'])
+	print('Defense:', trainer['combatStats']['defense'])
+	print('Special Attack:', trainer['combatStats']['specialAttack'])
+	print('Special Defense:', trainer['combatStats']['specialDefense'])
+	print('Speed:', trainer['combatStats']['speed'])
+	print('\nPokemon:')
 	for pokemon in trainer['pokemon']:
 		printPokemon(pokemon)
 
@@ -120,7 +130,6 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	# check evolution level, scaling chance to evolve the thing based on how many levels from the minimum for an evolution?
 	# set combat stats
 	combatStats = getPokemonBaseStats(species)
-	# TO-DO: assign level-up points, respecting BSR
 	pokemon['combatStats'] = combatStats
 	# set nature
 	if nature is not None:
@@ -136,6 +145,7 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 1
 	else:
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 2
+	# TO-DO: assign level-up points, respecting BSR
 	
 	# determine what moves it has
 	# get list of available moves; cull moves only available above its level, and tutor/tm/hm moves if not trained; only egg moves and tutor moves should be available to regular wild pokemon
@@ -193,8 +203,15 @@ def printPokemon(pokemon):
 	print('Name:', pokemon['name'])
 	print('Species:', pokemon['species'])
 	print('Level:', pokemon['level'])
+	print('\nCombat Stats')
+	print('HP:', pokemon['combatStats']['hp'])
+	print('Attack:', pokemon['combatStats']['attack'])
+	print('Defense:', pokemon['combatStats']['defense'])
+	print('Special Attack:', pokemon['combatStats']['special_attack'])
+	print('Special Defense:', pokemon['combatStats']['special_defense'])
+	print('Speed:', pokemon['combatStats']['speed'])
 	print('\nMoves Known:')
-	for move in pokemon['moves']:
+	for move in pokemon['movesLearned']:
 		print(move)
 
 # legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
@@ -771,8 +788,8 @@ while True:
 		if generatorMenu == "0": # Back
 			mainMenu = "-1"
 		elif generatorMenu == "1": # Random Trainer
-			print(generateRandomTrainer())
+			printTrainer(generateRandomTrainer())
 		elif generatorMenu == "2": # Random Pokemon
-			print(generatePokemon())
+			printPokemon(generatePokemon())
 	else:
 		mainMenu = "-1"
