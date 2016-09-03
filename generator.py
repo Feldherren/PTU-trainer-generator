@@ -2,15 +2,16 @@
 # actually, necessary to say we want something of a particular family?
 
 # TO-DO: get type data directly from config, instead of loading it into a dict
+# in these cases, not just a matter of changing typeData to typeConfig everywhere
 # TO-DO: get pokemon data directly from config, instead of loading it into a dict
-# TO=DO: searching for legendary/fossil pokemon is a kludge, should be fixed somehow
+# TO-DO: searching for legendary/fossil pokemon is a kludge, should be fixed somehow
 #	EG. currently getFilteredPokemonList takes 'legendary=False' in string, goes 'fType='NOT',legendary=True' to filterPokemonList regardless; instead filterPokemonList should only care about True/False/None
 #	Probably need to overhaul filterPokemonList entirely, as the fType thing is annoying to work with
-# in these cases, not just a matter of changing typeData to typeConfig everywhere
 
 import configparser #https://docs.python.org/3/library/configparser.html
 import argparse #https://docs.python.org/3/library/argparse.html
 import random #https://docs.python.org/3.5/library/random.html
+import operator # for getting baseStatRelation order
 
 parser = argparse.ArgumentParser(description='Currently just filters for pokemon based on a supplied filter string')
 #parser.add_argument('filterstring', help='string to filter pokemon by')
@@ -69,8 +70,8 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 		trainer['gender'] = random.choice(('male', 'female'))
 	# combat stats
 	statPoints = 10
-	combatStats = {'hp':10, 'attack':5, 'defense':5, 'specialAttack':5, 'specialDefense':5, 'speed':5}
-	eligibleStats = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
+	combatStats = {'hp':10, 'attack':5, 'defense':5, 'special_attack':5, 'special_defense':5, 'speed':5}
+	eligibleStats = ['hp', 'attack', 'defense', 'special_attack', 'special_defense', 'speed']
 	for i in range(statPoints):
 		randomStat = random.choice(eligibleStats)
 		combatStats[randomStat] = combatStats[randomStat]+1
@@ -82,7 +83,7 @@ def generateRandomTrainer(team=False, legendaryPokemon=False, fossilPokemon=Fals
 				eligibleStats.remove(randomStat)
 	# now apply stat points from levels
 	statPoints = trainer['level']
-	eligibleStats = ['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed']
+	eligibleStats = ['hp', 'attack', 'defense', 'special_attack', 'special_defense', 'speed']
 	for i in range(statPoints):
 		randomStat = random.choice(eligibleStats)
 		combatStats[randomStat] = combatStats[randomStat]+1
@@ -107,8 +108,8 @@ def printTrainer(trainer):
 	print('HP:', trainer['combatStats']['hp'])
 	print('Attack:', trainer['combatStats']['attack'])
 	print('Defense:', trainer['combatStats']['defense'])
-	print('Special Attack:', trainer['combatStats']['specialAttack'])
-	print('Special Defense:', trainer['combatStats']['specialDefense'])
+	print('Special Attack:', trainer['combatStats']['special_attack'])
+	print('Special Defense:', trainer['combatStats']['special_defense'])
 	print('Speed:', trainer['combatStats']['speed'])
 	print('\nPokemon:')
 	for pokemon in trainer['pokemon']:
@@ -127,7 +128,8 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	if species is None:
 		species = getRandomPokemon(level=pokemon['level'])
 	pokemon['species'] = species
-	# check evolution level, scaling chance to evolve the thing based on how many levels from the minimum for an evolution?
+	# TO-DO: check evolutions here, scaling chance to evolve the thing based on how many levels from the minimum for an evolution?
+	# how many levels until evolution-chance is 100%?
 	# set combat stats
 	combatStats = getPokemonBaseStats(species)
 	pokemon['combatStats'] = combatStats
@@ -145,11 +147,22 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 1
 	else:
 		pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] = pokemon['combatStats'][natureConfig[pokemon['nature']]['lowers']] - 2
-	# TO-DO: assign level-up points, respecting BSR
-	
+	# record pokemon baseStats for later (needed if nature is changed, for example)
+	# though this shouldn't be needed for that since absolute base stats are stored in the pokedex data file, this might still be useful somewhere
+	pokemon['baseStats'] = pokemon['combatStats']
+	# calculate base stat relation
+	pokemon['baseStatRelation'] = calculateBaseStatRelation(pokemon['combatStats'])
+	#print(pokemon['baseStatRelation'])
+	statPoints = 10 + pokemon['level']
+	for i in range(statPoints):
+		eligibleStats = getImprovableStats(pokemon['baseStatRelation'], pokemon['combatStats'])
+		# check what's eligible or what will break base stat relation at this point, and remove it from the list of eligible stats?
+		randomStat = random.choice(eligibleStats)
+		combatStats[randomStat] = combatStats[randomStat]+1
 	# determine what moves it has
 	# get list of available moves; cull moves only available above its level, and tutor/tm/hm moves if not trained; only egg moves and tutor moves should be available to regular wild pokemon
-	# TO-DO: currently only respects the current species; won't get moves from earlier evolutions, for example So, simulate levelling up to the current level, from 1? At least, for wild species; trainers could have earlier moves tutored
+	# TO-DO: currently only respects the current species; won't get moves from earlier evolutions, for example. So, simulate levelling up to the current level, from 1? At least, for wild species; trainers could have earlier moves tutored
+	# not a big issue except for type-changing things (specifically Eevee), and things like Metapod or Kakuna that only learn Harden
 	movesAvailable = []
 	movesLearned = []
 	levelMoves = getPokemonLevelMoves(pokemon['species'])
@@ -172,8 +185,8 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 			for move in getPokemonEggMoves(pokemon['species']):
 				movesAvailable.append(move)
 		if trained:
-			# this should respect tutor points, eventually
-			# should also respect Mew with its 'Any' at some point
+			# should this respect tutor points, eventually?
+			# Problem is there are tutor things that cost 2TP and tutor things that cost 1TP, and can teach the same moves
 			if getPokemonHMMoves(pokemon['species']) is not None:
 				for move in getPokemonHMMoves(pokemon['species']):
 					movesAvailable.append(move)
@@ -215,7 +228,92 @@ def printPokemon(pokemon):
 	for move in pokemon['movesLearned']:
 		print(move)
 
+# calculates the base stat relation of the pokemon
+# returns a dict of lists containing tiered stats, highest base value to lowest
+# needs to be iterated through with a 'for i in range (len(baseStatRelation)):', I think, to keep it in order? with baseStatRelation[i-1] to get the tiers
+# EG. 0 contains a list containing the highest stats, 1 would contain the tier below 0, 2 would contain the tier below 1, et cetera
+def calculateBaseStatRelation(baseStats):
+	tempStatOrder = sorted(baseStats.items(), key=operator.itemgetter(1), reverse=True)
+	baseStatRelation = dict()
+	lastValue = 0
+	listIndex = -1
+	for stat in tempStatOrder:
+		#print(stat)
+		if stat[1] != lastValue:
+			listIndex = listIndex + 1
+			lastValue = stat[1]
+			baseStatRelation[listIndex] = [stat[0]]
+		else:
+			baseStatRelation[listIndex].append(stat[0])
+			lastValue = stat[1]
+	return baseStatRelation
+
+def getImprovableStats(baseStatRelation, combatStats):
+	eligibleStats = ['hp', 'attack', 'defense', 'special_attack', 'special_defense', 'speed']
+	# in base stat relation, highest stat must always remain higher than lower stats
+	# EG. if speed is 10 and attack is 9, and speed is higher (NOT equal) in BSR than attack, attack CANNOT be raised
+	# EG. if speed is 10 and attack is 9, and speed is equal in BSR to attack, either attack or speed CAN be raised at will (as long as they don't exceed a higher BSR tier)
+	# methodology:
+	# check lowest tiers first; they're the ones that are going to be disqualified
+	# check a stat 'currentStat'
+	# loop through all stats
+	# if stat is currentStat, disregard
+	# if stat is in lower tier, disregard (should just be able to check that the stat hasn't previously been checked, since we check lower tiers beforehand)
+	# if stat is in current tier, disregard
+	# if stat is in higher tier, check that currentStat is at least -2 from items
+	# if currentStat is -1 or above to stat in higher tier, remove from eligibleStats
+	checkedStats = []
+	for tier in reversed(range(len(baseStatRelation))):
+		# tier counts from len to 0; lowest tier to highest
+		#print(baseStatRelation[tier])
+		for currentStat in baseStatRelation[tier]:
+			for stat in combatStats:
+				# ignore stats in lower tier than this one; we can do this by ignoring already-checked stats, since we check tiers in order lowest to highest
+				if stat not in checkedStats:
+					# ignore other stats within the same tier
+					if stat not in baseStatRelation[tier]: 
+						# remaining stats are higher-tier stats
+						if combatStats[currentStat] >= combatStats[stat]-1:
+							eligibleStats.pop(eligibleStats.index(currentStat))
+							break
+			checkedStats.append(currentStat)
+	return eligibleStats
+
+# pokemon is the dict() pokemon, levels is how many levels to gain
+def levelPokemon(pokemon, levels):
+	for i in range(levels):
+		# increment level
+		pokemon['level'] = pokemon['level'] + 1
+		# check if a move can be learned
+		levelMoves = getPokemonLevelMoves(pokemon['species'])
+		for move in levelMoves:
+			if int(levelMoves[move]) == pokemon['level']:
+				if len(pokemon['movesLearned']) < 6:
+					pokemon['movesLearned'].append(move)
+				else:
+					# deal with working out whether to forget a move in exchange for the new move here
+					# just a random 50/50 chance for now; once moves_105.ini is complete it might look at whether attack or special_attack is used and prioritise stuff based on the higher attack value
+					# or if roughly the same try to make sure it has at least one special attack move and one attack move
+					remove = random.choice(True, False)
+					if remove:
+						pokemon['movesLearned'].pop(pokemon['movesLearned'].index(random.choice(pokemon['movesLearned']))) # get the index of a random move in pokemon['movesLearned'] and pop it from the list
+						pokemon['movesLearned'].append(move)
+		# check if it got a tutor point
+		if pokemon['level'] % 5 == 0:
+			pokemon['tutorPoints'] = pokemon['tutorPoints']+1
+		# check if can evolve, and do that; also, reapply nature to base stats and recalculate base stat relation and restat the thing
+		# pokemon may learn any moves its earlier form could not, below the minimum level for the evolution (so if evolution is delayed and that skips a move, the pokemon does NOT get the chance to learn it)
+		# add stat point
+		eligibleStats = getImprovableStats(pokemon['baseStatRelation'], pokemon['combatStats'])
+		# currently doesn't have any plan, just raises a random eligible stat
+		stat = random.choice(eligibleStats)
+		pokemon['combatStats']['stat'] = pokemon['combatStats']['stat'] + 1
+	return pokemon
+
 # legendary and fossil: False, True or None? False disallows it, True means it must be, and None means it can be?
+# TO-DO: just make this call the filter method directly, rather than go through getFilteredPokemonList
+# or write another method that does that, as constructing strings for getFilteredPokemonList sucks
+# rename getFilteredPokemonList getFilteredPokemonListFromString, too.
 def getRandomPokemon(type=None, level=None, legendary=None, fossil=None):
 	# if no type or level supplied, assume 'any' for each
 	# alternatively, match pokemon to trainer level if level is not specified?
