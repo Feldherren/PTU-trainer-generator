@@ -216,6 +216,7 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 def printPokemon(pokemon):
 	print('Name:', pokemon['name'])
 	print('Species:', pokemon['species'])
+	print('Types:', pokemonData[pokemon['species']]['types'])
 	print('Level:', pokemon['level'])
 	print('\nCombat Stats')
 	print('HP:', pokemon['combatStats']['hp'])
@@ -226,7 +227,7 @@ def printPokemon(pokemon):
 	print('Speed:', pokemon['combatStats']['speed'])
 	print('\nMoves Known:')
 	for move in pokemon['movesLearned']:
-		print(move)
+		print(move.title())
 
 # calculates the base stat relation of the pokemon
 # returns a dict of lists containing tiered stats, highest base value to lowest
