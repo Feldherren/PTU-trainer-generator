@@ -128,6 +128,10 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 	if species is None:
 		species = getRandomPokemon(level=pokemon['level'])
 	pokemon['species'] = species
+	if random.randrange(1000) <= float(pokemonData[pokemon['species']]['gender_ratio_m'])*10:
+		pokemon['gender'] = 'Male'
+	else:
+		pokemon['gender'] = 'Female'
 	# TO-DO: check evolutions here, scaling chance to evolve the thing based on how many levels from the minimum for an evolution?
 	# how many levels until evolution-chance is 100%?
 	# set combat stats
@@ -216,6 +220,7 @@ def generatePokemon(shiny=False, species=None, nature=None, trained=False, minLe
 def printPokemon(pokemon):
 	print('Name:', pokemon['name'])
 	print('Species:', pokemon['species'])
+	print('Gender:', pokemon['gender'])
 	print('Types:', pokemonData[pokemon['species']]['types'])
 	print('Level:', pokemon['level'])
 	print('\nCombat Stats')
