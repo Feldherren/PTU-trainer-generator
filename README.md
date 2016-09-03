@@ -1,2 +1,4 @@
 # PTU-trainer-generator
-Random generator for PTU trainers (and pokemon teams). Currently just acts as a pokedex, however.
+Random generator for PTU trainers (and pokemon teams). Also a pokedex.
+
+Now actually generates (partial) trainers and pokemon.
