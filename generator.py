@@ -396,7 +396,7 @@ def printDefensiveEffectiveness(defense):
 # checks the breeding compatibility between two pokemon of named species
 # returns the first matching egg group found, or nothing
 def checkCompatibility(a, b):
-	if 'Indeterminate' not in getPokemonEggGroups(a) and 'Indeterminate' not in getPokemonEggGroups(b):
+	if 'None' not in getPokemonEggGroups(a) and 'None' not in getPokemonEggGroups(b):
 		if 'ditto' in getPokemonEggGroups(a) or 'ditto' in getPokemonEggGroups(b):
 			return 'ditto'
 		else:
